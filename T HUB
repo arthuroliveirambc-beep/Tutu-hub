@@ -1,0 +1,156 @@
+--[[
+Painel Script: Roube um Brainrot
+Funções:
+1. Anti Hit v1 (Invisibilidade + Imunidade ao pegar Brainrot)
+2. Atravessar Base (No Clip)
+3. Brainrot Teleport (Cima/Baixo da base rival)
+4. ESP Player (Ver todos os jogadores)
+5. Boost Speed (Velocidade 100)
+]]
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- UI Criando o Painel
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+screenGui.Name = "BrainrotPanel"
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 250, 0, 250)
+frame.Position = UDim2.new(0, 20, 0.5, -125)
+frame.BackgroundTransparency = 0.2
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.BorderSizePixel = 0
+
+local function createButton(name, posY, callback)
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1, -20, 0, 40)
+    btn.Position = UDim2.new(0, 10, 0, posY)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 17
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- 1. Anti Hit v1
+local antiHitActive = true
+local function setAntiHit(state)
+    antiHitActive = state
+    if state then
+        -- Invisibilidade
+        for _,v in pairs(character:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("Decal") then
+                v.Transparency = 1
+            end
+        end
+        -- Imunidade básica (remove humanoid's collision)
+        pcall(function()
+            character.HumanoidRootPart.CanCollide = true
+            character.Humanoid.PlatformStand = true
+        end)
+    else
+        for _,v in pairs(character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.Transparency = 0
+            elseif v:IsA("Decal") then
+                v.Transparency = 0
+            end
+        end
+        pcall(function()
+            character.HumanoidRootPart.CanCollide = true
+            character.Humanoid.PlatformStand = true
+        end)
+    end
+end
+
+createButton("Anti Hit v1 (Invis)", 10, function()
+    setAntiHit(not antiHitActive)
+end)
+
+-- 2. Atravessar Base (No Clip enquanto botão ON)
+local noclip = true
+local noclipConn
+createButton("Atravessar Base", 60, function()
+    noclip = not noclip
+    if noclip then
+        noclipConn = RunService.Stepped:Connect(function()
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                for _, part in pairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
+        end)
+    else
+        if noclipConn then noclipConn:Disconnect() end
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+end)
+
+-- 3. Brainrot Teleport (Cima/baixo da base rival)
+local up = true
+local rivalBasePart = workspace:FindFirstChild("BaseRival") -- Troque pelo nome certo da base rival
+createButton("Brainrot Teleport", 110, function()
+    if character and character:FindFirstChild("HumanoidRootPart") and rivalBasePart then
+        if up then
+            character.HumanoidRootPart.CFrame = rivalBasePart.CFrame + Vector3.new(0, 15, 0)
+        else
+            character.HumanoidRootPart.CFrame = rivalBasePart.CFrame - Vector3.new(0, 10, 0)
+        end
+        up = not up
+    end
+end)
+
+-- 4. ESP Player
+local espActive = true
+local espFolders = {}
+local function removeESP()
+    for _,v in pairs(espFolders) do
+        if v and v.Parent then v:Destroy() end
+    end
+    espFolders = {}
+end
+createButton("ESP Players", 160, function()
+    espActive = not espActive
+    removeESP()
+    if espActive then
+        for _,plr in pairs(game.Players:GetPlayers()) do
+            if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
+                local billboard = Instance.new("BillboardGui", plr.Character.Head)
+                billboard.Size = UDim2.new(0,100,0,40)
+                billboard.AlwaysOnTop = true
+                local label = Instance.new("TextLabel", billboard)
+                label.Size = UDim2.new(1,0,1,0)
+                label.Text = plr.Name
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.new(1,0,0)
+                label.Font = Enum.Font.GothamBold
+                label.TextSize = 18
+                table.insert(espFolders, billboard)
+            end
+        end
+    end
+end)
+
+-- 5. Boost Speed
+local speedActive = true
+local normalSpeed = 100
+createButton("Boost Speed", 210, function()
+    speedActive = not speedActive
+    if speedActive then
+        character.Humanoid.WalkSpeed = 100
+    else
+        character.Humanoid.WalkSpeed = normalSpeed
+    end
+end)
+
+-- Observação: Você pode precisar adaptar nomes de partes como "BaseRival" para o do seu mapa.
