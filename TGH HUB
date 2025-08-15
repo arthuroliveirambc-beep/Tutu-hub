@@ -1,0 +1,221 @@
+-- Painel para "Roube um Brainrot" by Copilot
+-- Funções: Anti Hit V2, ESP Players, TP Base
+
+--// CONFIGURAÇÕES
+local KEY_OPEN_PANEL = Enum.KeyCode.RightControl   -- Tecla para abrir/fechar o painel
+
+--// INTERFACE
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PainelBrainrot"
+ScreenGui.ResetOnSpawn = true
+ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+
+local Panel = Instance.new("Frame")
+Panel.Size = UDim2.new(0, 250, 0, 200)
+Panel.Position = UDim2.new(0.5, -125, 0.5, -100)
+Panel.BackgroundColor3 = Color3.fromRGB(50,50,50)
+Panel.Visible = true
+Panel.Parent = ScreenGui
+Panel.Active = true
+Panel.Draggable = true
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1,0,0,30)
+Title.Position = UDim2.new(0,0,0,0)
+Title.BackgroundTransparency = 1
+Title.Text = "Painel Brainrot"
+Title.TextColor3 = Color3.fromRGB(255,255,0)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.Parent = Panel
+
+local function CreateButton(text, y, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -20, 0, 40)
+    btn.Position = UDim2.new(0, 10, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(80,80,120)
+    btn.Text = text
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 16
+    btn.Parent = Panel
+    btn.MouseButton1Click:Connect(callback)
+end
+
+--// Função 1: Anti Hit V2
+local antiHitActive = true
+function AntiHitV2()
+    local lp = game.Players.LocalPlayer
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local brainrot = nil
+
+    -- Procura o brainrot na mochila ou mão
+    for _,v in ipairs(lp.Backpack:GetChildren()) do
+        if v.Name:lower():find("brainrot") then
+            brainrot = v
+        end
+    end
+    for _,v in ipairs(char:GetChildren()) do
+        if v.Name:lower():find("brainrot") then
+            brainrot = v
+        end
+    end
+
+    if not brainrot then
+        game.StarterGui:SetCore("SendNotification", {Title="Painel Brainrot", Text="Pegue o Brainrot primeiro!", Duration=2})
+        return
+    end
+
+    antiHitActive = not antiHitActive
+    if antiHitActive then
+        -- Torna corpo quadrado e invulnerável
+        for _,part in ipairs(char:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.Size = Vector3.new(3,3,3)
+                part.Material = Enum.Material.Neon
+                part.Color = Color3.fromRGB(0,255,0)
+            end
+        end
+
+        -- Desabilita humanoid states
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.PlatformStand = true
+            hum:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics, false)
+            hum.NameDisplayDistance = 0
+            hum.Health = hum.MaxHealth -- Cura
+        end
+
+        -- Remove hitbox (opcional, depende do jogo)
+        if char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CanCollide = true
+            char.HumanoidRootPart.Transparency = 0.5
+        end
+
+        -- Anti-dano: remove todos os scripts de dano do personagem
+        for _,v in ipairs(char:GetDescendants()) do
+            if v:IsA("Script") or v:IsA("LocalScript") then
+                pcall(function() v.Disabled = true end)
+            end
+        end
+
+        game.StarterGui:SetCore("SendNotification", {Title="Painel Brainrot", Text="Anti Hit V2 ATIVADO!", Duration=2})
+
+    else
+        -- Reseta corpo
+        for _,part in ipairs(char:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.Size = Vector3.new(2,2,1)
+                part.Material = Enum.Material.Plastic
+                part.Color = Color3.fromRGB(255,255,255)
+            end
+        end
+        game.StarterGui:SetCore("SendNotification", {Title="Painel Brainrot", Text="Anti Hit V2 DESATIVADO!", Duration=2})
+    end
+end
+
+--// Função 2: ESP Players
+local espActive = true
+local espBoxes = {}
+function ESPPlayers()
+    espActive = not espActive
+    if espActive then
+        for _,plr in ipairs(game.Players:GetPlayers()) do
+            if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local box = Instance.new("BoxHandleAdornment")
+                box.Size = Vector3.new(5,6,3)
+                box.Color3 = Color3.new(1,0,0)
+                box.Transparency = 0.5
+                box.AlwaysOnTop = true
+                box.Adornee = plr.Character.HumanoidRootPart
+                box.Parent = workspace
+                table.insert(espBoxes, box)
+            end
+        end
+        game.StarterGui:SetCore("SendNotification", {Title="Painel Brainrot", Text="ESP Players ATIVADO!", Duration=2})
+    else
+        for _,box in ipairs(espBoxes) do
+            if box and box.Parent then
+                box:Destroy()
+            end
+        end
+        espBoxes = {}
+        game.StarterGui:SetCore("SendNotification", {Title="Painel Brainrot", Text="ESP Players DESATIVADO!", Duration=2})
+    end
+end
+
+-- Atualiza ESP quando players entram/saem
+game.Players.PlayerAdded:Connect(function(plr)
+    if espActive then
+        wait(1)
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local box = Instance.new("BoxHandleAdornment")
+            box.Size = Vector3.new(5,6,3)
+            box.Color3 = Color3.new(1,0,0)
+            box.Transparency = 0.5
+            box.AlwaysOnTop = true
+            box.Adornee = plr.Character.HumanoidRootPart
+            box.Parent = workspace
+            table.insert(espBoxes, box)
+        end
+    end
+end)
+
+--// Função 3: TP Base
+function TPBase()
+    local lp = game.Players.LocalPlayer
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local brainrot = nil
+
+    -- Procura o brainrot na mochila ou mão
+    for _,v in ipairs(lp.Backpack:GetChildren()) do
+        if v.Name:lower():find("brainrot") then
+            brainrot = v
+        end
+    end
+    for _,v in ipairs(char:GetChildren()) do
+        if v.Name:lower():find("brainrot") then
+            brainrot = v
+        end
+    end
+
+    if not brainrot then
+        game.StarterGui:SetCore("SendNotification", {Title="Painel Brainrot", Text="Pegue o Brainrot primeiro!", Duration=2})
+        return
+    end
+
+    -- Localize a base do player (depende do mapa, aqui um exemplo genérico)
+    local base
+    for _,v in ipairs(workspace:GetChildren()) do
+        if v:IsA("BasePart") and v.Name:lower():find(lp.Name:lower()) and v.Position.Y < 100 then
+            base = v
+            break
+        end
+    end
+    if not base then
+        game.StarterGui:SetCore("SendNotification", {Title="Painel Brainrot", Text="Base não encontrada!", Duration=2})
+        return
+    end
+
+    -- Teleporta o player
+    char:MoveTo(base.Position + Vector3.new(0,5,0))
+    game.StarterGui:SetCore("SendNotification", {Title="Painel Brainrot", Text="Teleportado para sua base!", Duration=2})
+end
+
+--// BOTÕES
+CreateButton("ANTI HIT V2", 40, AntiHitV2)
+CreateButton("ESP PLAYERS", 90, ESPPlayers)
+CreateButton("TP BASE", 140, TPBase)
+
+--// Hotkey para painel
+game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == KEY_OPEN_PANEL then
+        Panel.Visible = not Panel.Visible
+    end
+end)
+
+--// Fim do Painel Brainrot
