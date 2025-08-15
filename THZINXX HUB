@@ -1,0 +1,97 @@
+-- Tutuhub Roblox Script para Steal Brainrot
+-- Key: Tutuhub01
+
+-- [ Sistema de Key ]
+local player = game.Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+
+local function keyPrompt()
+    local key = ""
+    repeat
+        key = tostring(game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Tutuhub Key System",
+            Text = "Digite a key no chat para ativar: Tutuhub01",
+            Duration = 10
+        }))
+        -- Espera o jogador digitar a key no chat
+        local found = false
+        player.Chatted:Connect(function(msg)
+            if msg == "Tutuhub01" then
+                found = true
+            end
+        end)
+        wait(10)
+        if found then
+            return true
+        end
+    until false
+end
+
+-- Checar Key
+local function checkKey()
+    local success = false
+    player.Chatted:Connect(function(msg)
+        if msg == "Tutuhub01" then
+            success = true
+        end
+    end)
+    while not success do
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Tutuhub Key System",
+            Text = "Digite a key: Tutuhub01 no chat para ativar!",
+            Duration = 5
+        })
+        wait(5)
+    end
+end
+
+checkKey()
+
+-- [ Anti-Hit ]
+local function antiHit()
+    local char = player.Character or player.CharacterAdded:Wait()
+    for _, v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = false
+            v.Touched:Connect(function(hit)
+                if hit.Parent:IsA("Model") and hit.Parent:FindFirstChild("Humanoid") then
+                    hit.CanCollide = false
+                end
+            end)
+        end
+    end
+end
+
+antiHit()
+
+-- [ Super Pulo e Super Velocidade ]
+local function superJumpSpeed()
+    local char = player.Character or player.CharacterAdded:Wait()
+    char.Humanoid.JumpPower = 120 -- Pulo alto
+    char.Humanoid.WalkSpeed = 60 -- Super velocidade
+end
+
+superJumpSpeed()
+
+-- [ Auto Farm (Simulado) ]
+local function autoFarm()
+    while true do
+        local char = player.Character or player.CharacterAdded:Wait()
+        -- Tente encontrar um objeto de farm (exemplo, moeda ou item de missão)
+        local farmObject = workspace:FindFirstChild("Coin") or workspace:FindFirstChildOfClass("Part")
+        if farmObject then
+            char:MoveTo(farmObject.Position)
+            wait(1)
+        else
+            wait(2)
+        end
+    end
+end
+
+spawn(autoFarm)
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Tutuhub",
+    Text = "Script ativado com sucesso!",
+    Duration = 10
+})
