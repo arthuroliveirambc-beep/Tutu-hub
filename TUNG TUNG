@@ -1,0 +1,179 @@
+--[[
+THZINXX HUB para "Steal a Brainrot" no Roblox
+Feito por Copilot para @arthuroliveirambc-beep
+IMPORTANTE: Esse script é para aprendizado. Não use para prejudicar outros jogadores!
+--]]
+
+-- GUI Principal
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "THZINXX_HUB"
+ScreenGui.Parent = game.CoreGui
+
+local Panel = Instance.new("Frame")
+Panel.Size = UDim2.new(0, 320, 0, 360)
+Panel.Position = UDim2.new(0, 40, 0, 120)
+Panel.BackgroundColor3 = Color3.fromRGB(35,35,35)
+Panel.BorderSizePixel = 0
+Panel.Visible = true
+Panel.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.Text = "THZINXX HUB"
+Title.TextSize = 28
+Title.Font = Enum.Font.GothamBold
+Title.TextColor3 = Color3.fromRGB(255,255,70)
+Title.Parent = Panel
+
+-- Botão de abrir/fechar painel
+local OpenClose = Instance.new("TextButton")
+OpenClose.Text = "Fechar Painel"
+OpenClose.Size = UDim2.new(0, 120, 0, 28)
+OpenClose.Position = UDim2.new(1, -125, 0, 7)
+OpenClose.BackgroundColor3 = Color3.fromRGB(40,40,90)
+OpenClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenClose.Font = Enum.Font.GothamBold
+OpenClose.TextSize = 14
+OpenClose.Parent = Panel
+
+-- Função de abrir/fechar painel
+OpenClose.MouseButton1Click:Connect(function()
+    Panel.Visible = not Panel.Visible
+end)
+
+-- Helper para botões de função
+local function createButton(y,text,callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -30, 0, 32)
+    btn.Position = UDim2.new(0, 16, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(45,45,60)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 18
+    btn.Text = text
+    btn.Parent = Panel
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = function() return LocalPlayer.Character end
+
+-- Função 1: Fly
+local flying = true
+local flyConn
+createButton(50,"Fly",function()
+    flying = not flying
+    if flying then
+        local bodyVel = Instance.new("BodyVelocity")
+        bodyVel.Name = "THZINXX_Fly"
+        bodyVel.MaxForce = Vector3.new(1e5,1e5,1e5)
+        bodyVel.Parent = Character().HumanoidRootPart
+        local UIS = game:GetService("UserInputService")
+        flyConn = UIS.InputBegan:Connect(function(input)
+            if input.KeyCode == Enum.KeyCode.W then
+                bodyVel.Velocity = Character().HumanoidRootPart.CFrame.LookVector * 80
+            elseif input.KeyCode == Enum.KeyCode.S then
+                bodyVel.Velocity = -Character().HumanoidRootPart.CFrame.LookVector * 80
+            elseif input.KeyCode == Enum.KeyCode.Space then
+                bodyVel.Velocity = Vector3.new(0,80,0)
+            end
+        end)
+    else
+        if Character().HumanoidRootPart:FindFirstChild("THZINXX_Fly") then
+            Character().HumanoidRootPart.THZINXX_Fly:Destroy()
+        end
+        if flyConn then flyConn:Disconnect() end
+    end
+end)
+
+-- Função 2: Atravessar Parede
+createButton(90,"Atravessar Parede",function()
+    local root = Character().HumanoidRootPart
+    root.CFrame = root.CFrame + root.CFrame.LookVector*5 + Vector3.new(0,2,0)
+end)
+
+-- Função 3: Anti Hit
+local antihit = true
+createButton(130,"Anti Hit",function()
+    antihit = not antihit
+    for _,v in pairs(Character():GetChildren()) do
+        if v:IsA("BasePart") and v.Name~="HumanoidRootPart" then
+            v.CanCollide = not antihit
+            v.Transparency = antihit and 1 or 0
+        end
+    end
+    if antihit then
+        Character().HumanoidRootPart.Size = Vector3.new(2,2,1)
+    else
+        Character().HumanoidRootPart.Size = Vector3.new(2,2,1)
+    end
+end)
+
+-- Função 4: ESP Players
+local espActive = true
+local espConnections = {}
+createButton(170,"ESP Players",function()
+    espActive = not espActive
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr~=LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+            if espActive then
+                local billboard = Instance.new("BillboardGui",plr.Character.Head)
+                billboard.Name = "THZINXX_ESP"
+                billboard.Size = UDim2.new(0, 70, 0, 20)
+                billboard.AlwaysOnTop = true
+                local label = Instance.new("TextLabel", billboard)
+                label.Size = UDim2.new(1,0,1,0)
+                label.BackgroundTransparency = 1
+                label.Text = plr.Name
+                label.TextColor3 = Color3.fromRGB(255, 60, 60)
+                label.TextScaled = true
+            else
+                if plr.Character.Head:FindFirstChild("THZINXX_ESP") then
+                    plr.Character.Head.THZINXX_ESP:Destroy()
+                end
+            end
+        end
+    end
+end)
+
+-- Função 5: Teleporte para a Base
+createButton(210,"Teleporte para a Base",function()
+    -- Supondo que a base do player seja uma parte chamada "Base" no workspace
+    local base = workspace:FindFirstChild(LocalPlayer.Name.."_Base") or workspace:FindFirstChild("Base")
+    if base then
+        Character().HumanoidRootPart.CFrame = base.CFrame + Vector3.new(0,3,0)
+    else
+        game.StarterGui:SetCore("SendNotification",{
+            Title="THZINXX HUB",
+            Text="Base não encontrada!"
+        })
+    end
+end)
+
+-- Função 6: Super Pulo
+local superJump = true
+createButton(250,"Super Pulo",function()
+    superJump = not superJump
+    Character().Humanoid.JumpPower = superJump and 180 or 50
+end)
+
+-- Função 7: Super Velocidade
+local superSpeed = true
+createButton(290,"Super Velocidade",function()
+    superSpeed = not superSpeed
+    Character().Humanoid.WalkSpeed = superSpeed and 70 or 16
+end)
+
+-- Dica de uso
+local Info = Instance.new("TextLabel")
+Info.Size = UDim2.new(1, -20, 0, 25)
+Info.Position = UDim2.new(0, 10, 1, -30)
+Info.BackgroundTransparency = 1
+Info.Text = "THZINXX HUB - Feito por Copilot"
+Info.TextSize = 13
+Info.Font = Enum.Font.Gotham
+Info.TextColor3 = Color3.fromRGB(100,255,100)
+Info.Parent = Panel
