@@ -1,0 +1,161 @@
+-- Painel Roube um Brainrot - Roblox Script
+-- Feito por Copilot | Para uso educacional
+-- Funções: Anti Hit v2, ESP Players, Super Velocidade e Super Pulo
+
+-- Cria uma tela GUI simples
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local AntiHitButton = Instance.new("TextButton")
+local EspButton = Instance.new("TextButton")
+local SpeedButton = Instance.new("TextButton")
+local User = game.Players.LocalPlayer
+
+ScreenGui.Parent = game.CoreGui
+Frame.Size = UDim2.new(0, 220, 0, 200)
+Frame.Position = UDim2.new(0, 100, 0, 100)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Frame.Parent = ScreenGui
+
+local function createButton(name, text, posY)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,200,0,40)
+    btn.Position = UDim2.new(0,10,0,posY)
+    btn.Text = text
+    btn.Name = name
+    btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Parent = Frame
+    return btn
+end
+
+AntiHitButton = createButton("AntiHit", "Anti Hit v2 (Invisível + Invencível)", 10)
+EspButton = createButton("ESP", "ESP Players", 60)
+SpeedButton = createButton("SpeedJump", "Super Velocidade + Super Pulo", 110)
+
+-------------------------
+-- Função 1: Anti Hit v2
+-------------------------
+local antiHitOn = true
+local invisParts = {}
+
+local function setInvisible(obj, state)
+    if obj:IsA("BasePart") or obj:IsA("Decal") then
+        obj.Transparency = state and 1 or 0
+        if obj:IsA("BasePart") then
+            obj.CanCollide = not state
+        end
+    end
+    for _,v in pairs(obj:GetChildren()) do
+        setInvisible(v, state)
+    end
+end
+
+AntiHitButton.MouseButton1Click:Connect(function()
+    antiHitOn = not antiHitOn
+    if antiHitOn then
+        -- Torna o player e o brainrot invisíveis e invencíveis
+        setInvisible(User.Character, true)
+        -- Procura o Brainrot na mão do jogador
+        for _,obj in pairs(User.Character:GetChildren()) do
+            if obj.Name:lower():find("brainrot") then
+                setInvisible(obj, true)
+            end
+        end
+        -- Anti hit (invencível)
+        if User.Character:FindFirstChildOfClass("Humanoid") then
+            local hum = User.Character:FindFirstChildOfClass("Humanoid")
+            hum.Name = "1" -- Protege de scripts básicos de ataque
+            hum.Health = math.huge
+            hum.MaxHealth = math.huge
+            -- Remove status negativos
+            for _,obj in pairs(User.Character:GetChildren()) do
+                if obj:IsA("BoolValue") or obj:IsA("StringValue") or obj:IsA("IntValue") then
+                    obj:Destroy()
+                end
+            end
+            -- Bloqueia efeitos de ataque
+            hum:GetPropertyChangedSignal("Health"):Connect(function()
+                hum.Health = math.huge
+            end)
+        end
+        AntiHitButton.Text = "Desligar Anti Hit v2"
+    else
+        setInvisible(User.Character, true)
+        for _,obj in pairs(User.Character:GetChildren()) do
+            if obj.Name:lower():find("brainrot") then
+                setInvisible(obj, true)
+            end
+        end
+        if User.Character:FindFirstChild("1") then
+            User.Character["1"].Name = "Humanoid"
+        end
+        AntiHitButton.Text = "Anti Hit v2 (Invisível + Invencível)"
+    end
+end)
+
+-------------------------
+-- Função 2: ESP Players
+-------------------------
+local espOn = true
+local espObjs = {}
+
+local function createESP(plr)
+    if plr == User then return end
+    local espBox = Instance.new("BillboardGui")
+    espBox.Name = "BrainrotESP"
+    espBox.Size = UDim2.new(0,100,0,40)
+    espBox.AlwaysOnTop = true
+    local text = Instance.new("TextLabel", espBox)
+    text.Size = UDim2.new(1,0,1,0)
+    text.BackgroundTransparency = 1
+    text.Text = plr.Name
+    text.TextColor3 = Color3.new(1,0,0)
+    text.TextStrokeTransparency = 0
+    if plr.Character and plr.Character:FindFirstChild("Head") then
+        espBox.Parent = plr.Character.Head
+    end
+    table.insert(espObjs, espBox)
+end
+
+EspButton.MouseButton1Click:Connect(function()
+    espOn = not espOn
+    if espOn then
+        for _,p in pairs(game.Players:GetPlayers()) do
+            if p ~= User and p.Character and p.Character:FindFirstChild("Head") then
+                createESP(p)
+            end
+        end
+        EspButton.Text = "Desligar ESP Players"
+    else
+        for _,esp in pairs(espObjs) do
+            if esp and esp.Parent then esp:Destroy() end
+        end
+        espObjs = {}
+        EspButton.Text = "ESP Players"
+    end
+end)
+
+-------------------------
+-- Função 3: Super Velocidade & Super Pulo
+-------------------------
+local superOn = true
+local walkSpeed = 150 -- padrão é 16
+local jumpPower = 100 -- padrão é 50
+
+SpeedButton.MouseButton1Click:Connect(function()
+    superOn = not superOn
+    local hum = User.Character and User.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        if superOn then
+            hum.WalkSpeed = walkSpeed
+            hum.JumpPower = jumpPower
+            SpeedButton.Text = "Desligar Super Velocidade/Pulo"
+        else
+            hum.WalkSpeed = 16
+            hum.JumpPower = 100
+            SpeedButton.Text = "Super Velocidade + Super Pulo"
+        end
+    end
+end)
+
+-- Fim do Painel
