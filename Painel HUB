@@ -1,0 +1,129 @@
+--[[
+  ZZ HUB Painel - Exemplo de script para Roblox Studio
+  Crie um ScreenGui > Frame e coloque este script como LocalScript dentro do Frame.
+--]]
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+
+-- Funções utilitárias
+local function notify(msg)
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "ZZ HUB";
+        Text = msg;
+        Duration = 3;
+    })
+end
+
+-- Função 1: Anti Hit v2
+local function antiHitV2()
+    -- Procura pelo brainrot na mochila ou na mão
+    local brainrot = char:FindFirstChild("Brainrot") or player.Backpack:FindFirstChild("Brainrot")
+    if brainrot then
+        -- Torna o jogador e o brainrot invisíveis
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 1
+            end
+        end
+        brainrot.Parent = char -- pega na mão
+        brainrot.Handle.Transparency = 1
+        -- "Imunidade": remove todos os efeitos negativos ao ser atingido
+        humanoid.Touched:Connect(function() 
+            humanoid.Health = humanoid.MaxHealth
+            for _, v in pairs(humanoid:GetChildren()) do
+                if v:IsA("BoolValue") and (v.Name:lower():find("freeze") or v.Name:lower():find("stun")) then
+                    v:Destroy()
+                end
+            end
+        end)
+        notify("Anti Hit v2 ativado!")
+    else
+        notify("Brainrot encontrado!")
+    end
+end
+
+-- Função 2: Super Pulo
+local function superJump()
+    humanoid.JumpPower = 200
+    humanoid.UseJumpPower = true
+    notify("Super Pulo ativado!")
+end
+
+-- Função 3: Super Velocidade
+local function superSpeed()
+    humanoid.WalkSpeed = 150
+    notify("Super Velocidade ativada!")
+end
+
+-- Função 4: ESP Players
+local function espPlayers()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character and v.Character:FindFirstChild("Head") then
+            local Billboard = Instance.new("BillboardGui")
+            Billboard.Name = "ZZ_ESP"
+            Billboard.Adornee = v.Character.Head
+            Billboard.Size = UDim2.new(0,100,0,40)
+            Billboard.AlwaysOnTop = true
+            local TextLabel = Instance.new("TextLabel", Billboard)
+            TextLabel.Size = UDim2.new(1,0,1,0)
+            TextLabel.Text = v.Name
+            TextLabel.BackgroundTransparency = 1
+            TextLabel.TextColor3 = Color3.new(1,0,0)
+            Billboard.Parent = v.Character.Head
+        end
+    end
+    notify("ESP Players ativado!")
+end
+
+-- Função 5: Aim Bot (supondo que o item se chama "WebShooter" e tem RemoteEvent "ShootWeb")
+local function aimBot()
+    local web = char:FindFirstChild("WebShooter") or player.Backpack:FindFirstChild("WebShooter")
+    if web then
+        web.Parent = char
+        local mouse = player:GetMouse()
+        mouse.Button1Down:Connect(function()
+            local target = nil
+            local minDist = math.huge
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (v.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).magnitude
+                    if dist < minDist then
+                        minDist = dist
+                        target = v.Character.HumanoidRootPart
+                    end
+                end
+            end
+            if target then
+                -- Supondo RemoteEvent para atirar a teia
+                if web:FindFirstChild("ShootWeb") then
+                    web.ShootWeb:FireServer(target.Position)
+                end
+            end
+        end)
+        notify("Aim Bot ativado!")
+    else
+        notify("Item de teia encontrado!")
+    end
+end
+
+-- Função 6: Teleporte para base (supondo que a base tem uma parte chamada "BasePart" em Workspace)
+local function teleportToBase()
+    local base = workspace:FindFirstChild("BasePart")
+    if base then
+        char:MoveTo(base.Position)
+        notify("Teleportado para a base!")
+    else
+        notify("Base encontrada!")
+    end
+end
+
+-- Ligue cada função aos botões do painel
+local gui = script.Parent
+gui.AntiHitBtn.MouseButton1Click:Connect(antiHitV2)
+gui.SuperJumpBtn.MouseButton1Click:Connect(superJump)
+gui.SuperSpeedBtn.MouseButton1Click:Connect(superSpeed)
+gui.ESPBtn.MouseButton1Click:Connect(espPlayers)
+gui.AimBotBtn.MouseButton1Click:Connect(aimBot)
+gui.TeleportBtn.MouseButton1Click:Connect(teleportToBase)
