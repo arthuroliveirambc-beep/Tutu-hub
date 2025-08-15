@@ -1,0 +1,104 @@
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local runService = game:GetService("RunService")
+
+-- Configs
+local speed = 50
+local jumpPower = 100
+local espEnabled = true
+local antiHit = true
+local autoFarm = false
+
+-- ESP Players
+function createESP(target)
+    if target:FindFirstChild("Head") and not target.Head:FindFirstChild("ESPBox") then
+        local box = Instance.new("BoxHandleAdornment")
+        box.Name = "ESPBox"
+        box.Adornee = target.Head
+        box.Size = Vector3.new(2, 2, 1)
+        box.Color3 = Color3.fromRGB(0, 255, 0)
+        box.AlwaysOnTop = true
+        box.ZIndex = 10
+        box.Parent = target.Head
+    end
+end
+
+if espEnabled then
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            createESP(plr.Character)
+        end
+    end
+    game.Players.PlayerAdded:Connect(function(plr)
+        plr.CharacterAdded:Connect(function(char)
+            wait(1)
+            createESP(char)
+        end)
+    end)
+end
+
+-- Anti Hit / Ninguém me ataca
+if antiHit then
+    humanoid.NameDisplayDistance = 0
+    humanoid.HealthDisplayDistance = 0
+    humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+        humanoid.Health = humanoid.MaxHealth
+    end)
+    -- Invisibilidade básica
+    for _, v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+            v.CanCollide = false
+            v.Transparency = 0.5
+        end
+    end
+end
+
+-- Speed e Pulo
+humanoid.WalkSpeed = speed
+humanoid.JumpPower = jumpPower
+
+-- Auto Farm (simples, personalize conforme o mapa)
+spawn(function()
+    while autoFarm and wait(1) do
+        -- Exemplo: teleport para brainrot item, adapte para o mapa real
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj.Name:lower():find("brainrot") and obj:IsA("BasePart") then
+                char:MoveTo(obj.Position + Vector3.new(0,3,0))
+                wait(0.5)
+            end
+        end
+    end
+end)
+
+-- Ir para servidor com secret
+function hopToSecretServer()
+    local HttpService = game:GetService("HttpService")
+    local servers = {}
+    local req = syn and syn.request or http_request or request
+    local cursor = ""
+    repeat
+        local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=2&limit=100"..(cursor~="" and "&cursor="..cursor or "")
+        local response = req({Url = url, Method = "GET"})
+        local data = HttpService:JSONDecode(response.Body)
+        for _, s in pairs(data.data) do
+            if s.playing < s.maxPlayers then
+                -- verificação de segredo simples (adapte para pegar pelo mapa real)
+                if s.id:find("secret") then
+                    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, s.id, player)
+                    return
+                end
+            end
+        end
+        cursor = data.nextPageCursor or ""
+        wait(1)
+    until cursor == ""
+end
+
+-- Comando para trocar de server com segredo
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.K and not gameProcessed then
+        hopToSecretServer()
+    end
+end)
