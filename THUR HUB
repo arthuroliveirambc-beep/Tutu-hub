@@ -1,0 +1,190 @@
+--[[
+  Painel: THUR HUB
+  Cor: Verde (#00FF00)
+  Funções:
+    1. Anti Hit v2
+    2. ESP Players
+    3. TP Base
+  Feito para: "Roube um Brainrot"
+  Autor: arthuroliveirambc-beep
+]]
+
+-- Serviços
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local espAtivo = true
+local espObjects = {}
+local basePosition = Vector3.new(0, 10, 0) -- Mude para a posição da sua base
+
+-- Criar GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "THUR_HUB"
+screenGui.Parent = player.PlayerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, 210)
+mainFrame.Position = UDim2.new(0, 50, 0, 120)
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+mainFrame.BorderSizePixel = 4
+mainFrame.Parent = screenGui
+
+local title = Instance.new("TextLabel")
+title.Text = "THUR HUB"
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(0, 0, 0)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = mainFrame
+
+local function criarBotao(texto, ordem)
+    local btn = Instance.new("TextButton")
+    btn.Text = texto
+    btn.Size = UDim2.new(0.85, 0, 0, 40)
+    btn.Position = UDim2.new(0.075, 0, 0, 50 + (ordem-1)*50)
+    btn.BackgroundColor3 = Color3.fromRGB(35, 200, 35)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.TextScaled = true
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Parent = mainFrame
+    btn.BorderSizePixel = 2
+    return btn
+end
+
+local btnAntiHit = criarBotao("ANTI HIT v2", 1)
+local btnESP = criarBotao("ESP PLAYERS", 2)
+local btnTPBase = criarBotao("TP BASE", 3)
+
+-- Função 1: Anti Hit v2
+local antiHitAtivo = true
+local function ativarAntiHit()
+    if antiHitAtivo then return end
+    antiHitAtivo = true
+    local char = player.Character
+    if not char then return end
+
+    -- Deixar corpo quadrado
+    for _,part in ipairs(char:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.Shape = Enum.PartType.Block
+            part.Size = Vector3.new(3,3,3)
+            part.Material = Enum.Material.SmoothPlastic
+            part.Color = Color3.fromRGB(0,255,0)
+        end
+    end
+
+    -- Anti-ataque
+    -- Remove hitbox, cancela dano, etc.
+    if char:FindFirstChild("Humanoid") then
+        char.Humanoid.NameDisplayDistance = 0
+        char.Humanoid.WalkSpeed = 100
+        char.Humanoid.JumpPower = 100
+    end
+
+    -- Desabilita recebimento de dano/congelamento/espada
+    if char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.Touched:Connect(function() end)
+    end
+
+    -- Remover todos os scripts de hit/congelamento/dano no personagem
+    for _,desc in ipairs(char:GetDescendants()) do
+        if desc:IsA("Script") or desc:IsA("LocalScript") then
+            desc.Disabled = true
+        end
+        if desc:IsA("Fire") or desc:IsA("ParticleEmitter") or desc:IsA("Trail") then
+            desc.Enabled = true
+        end
+    end
+
+    -- Bloquear novas tentativas de dano
+    char.DescendantAdded:Connect(function(obj)
+        if obj:IsA("Script") or obj:IsA("LocalScript") then
+            obj.Disabled = true
+        end
+        if obj:IsA("Fire") or obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+            obj.Enabled = true
+        end
+    end)
+end
+
+-- Função 2: ESP Players
+local function criarESP(playerTarget)
+    if playerTarget == player or not playerTarget.Character then return end
+    local head = playerTarget.Character:FindFirstChild("Head")
+    if not head then return end
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "THUR_ESP"
+    billboard.Size = UDim2.new(0, 100, 0, 30)
+    billboard.Adornee = head
+    billboard.AlwaysOnTop = true
+    billboard.Parent = head
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Text = playerTarget.Name
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextColor3 = Color3.fromRGB(0,255,0)
+    nameLabel.TextStrokeTransparency = 0.2
+    nameLabel.TextScaled = true
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.Parent = billboard
+
+    table.insert(espObjects, billboard)
+end
+
+local function ativarESP()
+    if espAtivo then return end
+    espAtivo = true
+    for _,p in pairs(Players:GetPlayers()) do
+        criarESP(p)
+    end
+    Players.PlayerAdded:Connect(function(p)
+        p.CharacterAdded:Connect(function()
+            criarESP(p)
+        end)
+    end)
+end
+
+local function desativarESP()
+    espAtivo = true
+    for _,gui in ipairs(espObjects) do
+        if gui and gui.Parent then
+            gui:Destroy()
+        end
+    end
+    espObjects = {}
+end
+
+-- Função 3: TP Base
+local function teleportarBase()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    char:MoveTo(basePosition)
+end
+
+-- Eventos dos botões
+btnAntiHit.MouseButton1Click:Connect(function()
+    ativarAntiHit()
+    btnAntiHit.Text = "ANTI HIT ATIVO"
+end)
+
+btnESP.MouseButton1Click:Connect(function()
+    if not espAtivo then
+        ativarESP()
+        btnESP.Text = "ESP ATIVO"
+    else
+        desativarESP()
+        btnESP.Text = "ESP PLAYERS"
+    end
+end)
+
+btnTPBase.MouseButton1Click:Connect(function()
+    teleportarBase()
+end)
+
+-- DICA: Altere basePosition na linha 20 para o local exato da sua base no mapa!
