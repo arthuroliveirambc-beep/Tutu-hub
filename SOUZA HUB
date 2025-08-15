@@ -1,0 +1,197 @@
+-- TUTU HUB01 | by Copilot
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+
+-- Criar o painel principal
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "TUTUHUB01"
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0,300,0,400)
+Main.Position = UDim2.new(0,100,0,100)
+Main.BackgroundColor3 = Color3.new(0.1,0.1,0.1)
+Main.Active = true
+Main.Draggable = true
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1,0,0,40)
+Title.Text = "TUTU HUB01"
+Title.TextColor3 = Color3.new(1,0,0)
+Title.Font = Enum.Font.FredokaOne
+Title.TextScaled = true
+Title.BackgroundTransparency = 1
+
+local function createButton(name, position, callback)
+    local btn = Instance.new("TextButton", Main)
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.Position = UDim2.new(0.05, 0, 0, position)
+    btn.BackgroundColor3 = Color3.new(0.2,0.2,0.2)
+    btn.Text = name
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextScaled = true
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- 1. STEAL
+local function stealFunc()
+    local subPanel = Instance.new("Frame", Main)
+    subPanel.Size = UDim2.new(0.7,0,0,100)
+    subPanel.Position = UDim2.new(0.15,0,0.6,0)
+    subPanel.BackgroundColor3 = Color3.new(0.15,0.15,0.18)
+
+    local btnUp = Instance.new("TextButton", subPanel)
+    btnUp.Size = UDim2.new(1,0,0.45,0)
+    btnUp.Position = UDim2.new(0,0,0,0)
+    btnUp.Text = "Ir pra cima do mapa"
+    btnUp.TextScaled = true
+    btnUp.MouseButton1Click:Connect(function()
+        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,150,0)
+    end)
+
+    local btnDown = Instance.new("TextButton", subPanel)
+    btnDown.Size = UDim2.new(1,0,0.45,0)
+    btnDown.Position = UDim2.new(0,0,0.5,0)
+    btnDown.Text = "Cair pra baixo"
+    btnDown.TextScaled = true
+    btnDown.MouseButton1Click:Connect(function()
+        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,-150,0)
+    end)
+end
+
+-- 2. ANTI HIT
+local function antiHitFunc()
+    local char = LocalPlayer.Character
+    if char then
+        -- invisível
+        for _,v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then
+                v.Transparency = 1
+                if v.Name == "Head" then v.face:Destroy() end
+            end
+        end
+        -- invulnerável (simples)
+        if char:FindFirstChildOfClass("Humanoid") then
+            char.Humanoid.Name = "TUTU_HUB01_Humanoid"
+        end
+        -- brainrot: só tronco (torso)
+        for _,v in pairs({"Head","Left Arm","Right Arm","Left Leg","Right Leg"}) do
+            if char:FindFirstChild(v) then
+                char[v]:Destroy()
+            end
+        end
+    end
+end
+
+-- 3. ATRAVESSAR BASE
+local function atravessarBaseFunc()
+    local char = LocalPlayer.Character
+    if char then
+        char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(50,0,0)
+    end
+end
+
+-- 4. VOAR
+local flying = true
+local function voarFunc()
+    flying = not flying
+    if flying then
+        local bp = Instance.new("BodyPosition", LocalPlayer.Character.HumanoidRootPart)
+        bp.Name = "TUTU_Fly"
+        bp.MaxForce = Vector3.new(1e9,1e9,1e9)
+        bp.Position = LocalPlayer.Character.HumanoidRootPart.Position
+        UIS.InputBegan:Connect(function(input)
+            if input.KeyCode == Enum.KeyCode.W then
+                bp.Position = bp.Position + Vector3.new(0,4,0)
+            elseif input.KeyCode == Enum.KeyCode.S then
+                bp.Position = bp.Position + Vector3.new(0,-4,0)
+            end
+        end)
+    else
+        local bp = LocalPlayer.Character.HumanoidRootPart:FindFirstChild("TUTU_Fly")
+        if bp then bp:Destroy() end
+    end
+end
+
+-- 5. ESP PLAYERS
+local ESPenabled = true
+local function espPlayersFunc()
+    ESPenabled = not ESPenabled
+    if ESPenabled then
+        for _,p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                local Billboard = Instance.new("BillboardGui", p.Character.Head)
+                Billboard.Size = UDim2.new(0,100,0,40)
+                Billboard.Adornee = p.Character.Head
+                Billboard.Name = "TUTU_ESP"
+                local Text = Instance.new("TextLabel", Billboard)
+                Text.Text = p.Name
+                Text.Size = UDim2.new(1,0,1,0)
+                Text.TextColor3 = Color3.new(1,0,0)
+                Text.BackgroundTransparency = 1
+            end
+        end
+    else
+        for _,p in pairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("Head") then
+                if p.Character.Head:FindFirstChild("TUTU_ESP") then
+                    p.Character.Head.TUTU_ESP:Destroy()
+                end
+            end
+        end
+    end
+end
+
+-- 6. SUPER PULO & SUPER VELOCIDADE
+local function superFunc()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        char.Humanoid.JumpPower = 200
+        char.Humanoid.WalkSpeed = 80
+    end
+end
+
+-- 7. NOCLIP
+local noclip = true
+local function noclipFunc()
+    noclip = not noclip
+    if noclip then
+        game:GetService("RunService").Stepped:Connect(function()
+            if LocalPlayer.Character then
+                for _,v in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.CanCollide = true
+                    end
+                end
+            end
+        end)
+    else
+        if LocalPlayer.Character then
+            for _,v in pairs(LocalPlayer.Character:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = true
+                end
+            end
+        end
+    end
+end
+
+-- 8. CIMA DA BASE
+local function cimaBaseFunc()
+    -- exemplo: teleporta pra cima da base (ajuste se necessário)
+    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0,300,0)
+end
+
+-- Criar botões
+createButton("STEAL", 50, stealFunc)
+createButton("ANTI HIT", 1000, antiHitFunc)
+createButton("ATRAVESSAR BASE", 130, atravessarBaseFunc)
+createButton("VOAR", 170, voarFunc)
+createButton("ESP PLAYERS", 210, espPlayersFunc)
+createButton("SUPER PULO & VELOC", 300, superFunc)
+createButton("NOCLIP", 290, noclipFunc)
+createButton("CIMA DA BASE", 330, cimaBaseFunc)
+
+-- Fim do script
