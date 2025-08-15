@@ -1,0 +1,232 @@
+--[[
+    Steal a Brainrot Script GUI by Copilot
+    Recursos: Anti Hit, ESP Brainrot, ESP Players, Super Velocidade, Super Pulo, Auto Farm, Auto Steal
+--]]
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- GUI Setup
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "BrainrotScript"
+
+local Panel = Instance.new("Frame", ScreenGui)
+Panel.Size = UDim2.new(0, 250, 0, 350)
+Panel.Position = UDim2.new(0, 20, 0, 100)
+Panel.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Panel.BorderSizePixel = 0
+
+local function addButton(name, y, callback)
+    local btn = Instance.new("TextButton", Panel)
+    btn.Size = UDim2.new(1, -20, 0, 30)
+    btn.Position = UDim2.new(0, 10, 0, y)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 18
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local antiHitOn = true
+local espBrainrotOn = true
+local espPlayersOn = true
+local superSpeedOn = true
+local superJumpOn = true
+local autoFarmOn = true
+local autoStealOn = true
+local connections = {}
+
+-- FUNÇÃO: Anti Hit
+local function toggleAntiHit()
+    antiHitOn = not antiHitOn
+    if antiHitOn then
+        -- Torna o corpo quadrado
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetChildren()) do
+                if part:IsA("Part") then
+                    part.Shape = Enum.PartType.Block
+                    part.Size = Vector3.new(3,3,3)
+                end
+            end
+        end
+        -- Torna invencível (Desativa Touch/Hitbox)
+        if char and char:FindFirstChildOfClass("Humanoid") then
+            char.Humanoid.Name = "NoHitHumanoid"
+        end
+    else
+        -- Voltar ao normal (caso tenha troca de personagem, reset)
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetChildren()) do
+                if part:IsA("Part") then
+                    part.Shape = Enum.PartType.Block
+                    part.Size = Vector3.new(2,2,1) -- tamanho padrão
+                end
+            end
+            if char:FindFirstChild("NoHitHumanoid") then
+                char.NoHitHumanoid.Name = "Humanoid"
+            end
+        end
+    end
+end
+
+-- FUNÇÃO: ESP Brainrot
+local brainrotEsps = {}
+local function toggleEspBrainrot()
+    espBrainrotOn = not espBrainrotOn
+    for _,esp in pairs(brainrotEsps) do
+        esp:Destroy()
+    end
+    table.clear(brainrotEsps)
+    if espBrainrotOn then
+        for _,player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Brainrot") then
+                local br = player.Character.Brainrot
+                local adorn = Instance.new("BillboardGui", ScreenGui)
+                adorn.Size = UDim2.new(0,100,0,40)
+                adorn.Adornee = br
+                adorn.AlwaysOnTop = true
+                local label = Instance.new("TextLabel", adorn)
+                label.Size = UDim2.new(1,0,1,0)
+                label.Text = "Melhor Brainrot!"
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.new(1,1,0)
+                label.TextStrokeTransparency = 0
+                table.insert(brainrotEsps,adorn)
+            end
+        end
+    end
+end
+
+-- FUNÇÃO: ESP Players
+local playerEsps = {}
+local function toggleEspPlayers()
+    espPlayersOn = not espPlayersOn
+    for _,esp in pairs(playerEsps) do
+        esp:Destroy()
+    end
+    table.clear(playerEsps)
+    if espPlayersOn then
+        for _,player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local head = player.Character.Head
+                local adorn = Instance.new("BillboardGui", ScreenGui)
+                adorn.Size = UDim2.new(0,100,0,25)
+                adorn.Adornee = head
+                adorn.AlwaysOnTop = true
+                local label = Instance.new("TextLabel", adorn)
+                label.Size = UDim2.new(1,0,1,0)
+                label.Text = player.Name
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.new(0,1,0)
+                label.TextStrokeTransparency = 0
+                table.insert(playerEsps,adorn)
+            end
+        end
+    end
+end
+
+-- FUNÇÃO: Super Velocidade
+local function toggleSuperSpeed()
+    superSpeedOn = not superSpeedOn
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        char:FindFirstChildOfClass("Humanoid").WalkSpeed = superSpeedOn and 100 or 16
+    end
+end
+
+-- FUNÇÃO: Super Pulo
+local function toggleSuperJump()
+    superJumpOn = not superJumpOn
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        char:FindFirstChildOfClass("Humanoid").JumpPower = superJumpOn and 150 or 50
+    end
+end
+
+-- FUNÇÃO: Auto Farm
+local function toggleAutoFarm()
+    autoFarmOn = not autoFarmOn
+    if autoFarmOn then
+        connections.AutoFarm = RunService.Heartbeat:Connect(function()
+            -- Exemplo: Anda até o brainrot mais próximo
+            local char = LocalPlayer.Character
+            if char then
+                local closest
+                local minDist = math.huge
+                for _,obj in pairs(Workspace:GetChildren()) do
+                    if obj.Name:lower():find("brainrot") and obj:IsA("Part") then
+                        local dist = (char.HumanoidRootPart.Position - obj.Position).Magnitude
+                        if dist < minDist then
+                            minDist = dist
+                            closest = obj
+                        end
+                    end
+                end
+                if closest then
+                    char.HumanoidRootPart.CFrame = closest.CFrame + Vector3.new(0,3,0)
+                end
+            end
+        end)
+    else
+        if connections.AutoFarm then connections.AutoFarm:Disconnect() end
+    end
+end
+
+-- FUNÇÃO: Auto Steal
+local function toggleAutoSteal()
+    autoStealOn = not autoStealOn
+    if autoStealOn then
+        connections.AutoSteal = RunService.Heartbeat:Connect(function()
+            -- Se você estiver segurando o brainrot, teleporta pra base
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Brainrot") then
+                -- Identifique sua base: Troque "SuaBase" pelo objeto correto no seu mapa!
+                local base = Workspace:FindFirstChild(LocalPlayer.Name.."'s Base") or Workspace:FindFirstChild("Base"..LocalPlayer.Name)
+                if base and base:IsA("Part") then
+                    char.HumanoidRootPart.CFrame = base.CFrame + Vector3.new(0,10,0)
+                end
+            end
+        end)
+    else
+        if connections.AutoSteal then connections.AutoSteal:Disconnect() end
+    end
+end
+
+-- Botões
+addButton("Anti Hit", 10, toggleAntiHit)
+addButton("ESP Brainrot", 50, toggleEspBrainrot)
+addButton("ESP Players", 90, toggleEspPlayers)
+addButton("Super Velocidade", 130, toggleSuperSpeed)
+addButton("Super Pulo", 170, toggleSuperJump)
+addButton("Auto Farm", 210, toggleAutoFarm)
+addButton("Auto Steal", 250, toggleAutoSteal)
+
+-- Arrastar o painel
+local dragging, dragInput, dragStart, startPos
+Panel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = Panel.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+Panel.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+        local delta = input.Position - dragStart
+        Panel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+print("[Brainrot Script] GUI carregado! Use com responsabilidade.")
