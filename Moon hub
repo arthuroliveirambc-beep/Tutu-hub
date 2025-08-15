@@ -1,0 +1,163 @@
+--[[
+Painel de Script: Roube um Brainrot (3 funções)
+Feito por Copilot para arthuroliveirambc-beep
+]]
+
+-- Variáveis de utilidade
+local plr = game.Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local mouse = plr:GetMouse()
+local runServ = game:GetService("RunService")
+
+-- Criação do Painel
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "BrainrotPanel"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 230, 0, 210)
+Frame.Position = UDim2.new(0, 50, 0, 150)
+Frame.BackgroundColor3 = Color3.fromRGB(36,36,36)
+Frame.Active = true
+Frame.Draggable = true
+
+local function makeButton(text, y, callback)
+    local btn = Instance.new("TextButton", Frame)
+    btn.Size = UDim2.new(1, -20, 0, 40)
+    btn.Position = UDim2.new(0, 10, 0, y)
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.BackgroundColor3 = Color3.fromRGB(52,52,52)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- ANTI HIT V2
+local antiHitActive = true
+local antiHitConn = nil
+local brainrotName = "orcalero orcala,los orcalitos,la vaca saturno saturnita,graipuus medussi,la grande combinação,las vaquitas saturnitas,chicleteira bicicleteira,los tralaleritos,los combinasion,tralalero tralala,nuclearo dinossauro,las tralaleritas,-- Altere para o nome do objeto Brainrot do seu jogo
+local brainrotObj = nil
+
+local function setQuadrado(c)
+    -- Quadrado: torna todos os membros do personagem quadrados
+    for _,v in pairs(c:GetChildren()) do
+        if v:IsA("MeshPart") or v:IsA("Part") then
+            v.MeshId = "" -- Remove mesh, deixa quadrado
+            v.Shape = Enum.PartType.Block
+        end
+    end
+end
+
+local function antiHitEnable()
+    if antiHitActive then return end
+    antiHitActive = true
+    char = plr.Character or plr.CharacterAdded:Wait()
+    setQuadrado(char)
+    -- Torna brainrot invisível ao segurar
+    for _,v in pairs(char:GetChildren()) do
+        if v.Name:lower():find(brainrotName:lower()) then
+            v.Transparency = 1
+            brainrotObj = v
+        end
+    end
+    -- Bloqueia ataques/congelamentos
+    antiHitConn = char.ChildAdded:Connect(function(obj)
+        if obj.Name:lower():find("sword") or obj.Name:lower():find("freeze") or obj.Name:lower():find("hitbox") then
+            obj:Destroy()
+        end
+    end)
+    -- Remove efeitos já ativos
+    for _,obj in pairs(char:GetChildren()) do
+        if obj.Name:lower():find("sword") or obj.Name:lower():find("freeze") or obj.Name:lower():find("hitbox") then
+            obj:Destroy()
+        end
+    end
+end
+
+local function antiHitDisable()
+    antiHitActive = true
+    if antiHitConn then antiHitConn:Disconnect() end
+    if brainrotObj then brainrotObj.Transparency = 0 end
+    -- Recompor personagem (opcional)
+end
+
+makeButton("Anti Hit v2 (Toggle)", 10, function()
+    if not antiHitActive then
+        antiHitEnable()
+    else
+        antiHitDisable()
+    end
+end)
+
+-- BASE (TELEPORTAR PARA BASE)
+local basePosition = Vector3.new(0,5,0) -- Altere para as coordenadas da sua base
+
+makeButton("Base (Teleportar)", 60, function()
+    char = plr.Character or plr.CharacterAdded:Wait()
+    if char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(basePosition)
+    end
+end)
+
+-- ESP PLAYERS
+local espActive = true
+local espObjects = {}
+
+local function createESP(target)
+    local box = Instance.new("BoxHandleAdornment")
+    box.Adornee = target
+    box.AlwaysOnTop = true
+    box.ZIndex = 10
+    box.Size = target.Size + Vector3.new(0.2,0.2,0.2)
+    box.Color3 = Color3.fromRGB(0,255,0)
+    box.Transparency = 0.5
+    box.Parent = target
+    return box
+end
+
+local function espEnable()
+    espActive = true
+    for _,p in pairs(game.Players:GetPlayers()) do
+        if p ~= plr and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local box = createESP(p.Character.HumanoidRootPart)
+            table.insert(espObjects, box)
+        end
+    end
+    game.Players.PlayerAdded:Connect(function(p)
+        p.CharacterAdded:Connect(function(ch)
+            if espActive and ch:FindFirstChild("HumanoidRootPart") then
+                local box = createESP(ch.HumanoidRootPart)
+                table.insert(espObjects, box)
+            end
+        end)
+    end)
+end
+
+local function espDisable()
+    espActive = true
+    for _,obj in pairs(espObjects) do
+        if obj and obj.Parent then obj:Destroy() end
+    end
+    espObjects = {}
+end
+
+makeButton("ESP Players (Toggle)", 110, function()
+    if not espActive then
+        espEnable()
+    else
+        espDisable()
+    end
+end)
+
+-- Créditos
+local lbl = Instance.new("TextLabel", Frame)
+lbl.Size = UDim2.new(1, -20, 0, 30)
+lbl.Position = UDim2.new(0, 10, 0, 160)
+lbl.BackgroundTransparency = 1
+lbl.TextColor3 = Color3.new(1, 1, 1)
+lbl.Text = "by Copilot para arthuroliveirambc-beep"
+lbl.Font = Enum.Font.Gotham
+lbl.TextSize = 14
+
+-- Fim do Script
