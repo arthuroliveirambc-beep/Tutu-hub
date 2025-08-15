@@ -1,0 +1,194 @@
+-- Remove UIs antigas
+pcall(function() player.PlayerGui:FindFirstChild("ARTHUR_HUB"):Destroy() end)
+
+local screengui = Instance.new("ScreenGui", player.PlayerGui)
+screengui.Name = "ARTHUR_HUB"
+
+local panel = Instance.new("Frame", screengui)
+panel.Size = UDim2.new(0, 300, 0, 300)
+panel.Position = UDim2.new(0.5, -150, 0.5, -150)
+panel.BackgroundColor3 = Color3.new(0,0,0)
+panel.BackgroundTransparency = 0.1
+panel.AnchorPoint = Vector2.new(0.5,0.5)
+panel.Name = "CirclePanel"
+panel.BorderSizePixel = 0
+panel.ClipsDescendants = true
+
+-- Círculo
+local uicorner = Instance.new("UICorner", panel)
+uicorner.CornerRadius = UDim.new(1,0)
+
+local title = Instance.new("TextLabel", panel)
+title.Text = "ARTHUR HUB"
+title.Font = Enum.Font.FredokaOne
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(1,0,0.2,0)
+title.Position = UDim2.new(0,0,0,10)
+title.TextScaled = true
+
+-- [BOTÕES]
+local function addBtn(txt, pos, callback)
+    local btn = Instance.new("TextButton", panel)
+    btn.Text = txt
+    btn.Font = Enum.Font.FredokaOne
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.BackgroundColor3 = Color3.new(0.1,0.1,0.1)
+    btn.BorderSizePixel = 0
+    btn.Size = UDim2.new(0.7,0,0.11,0)
+    btn.Position = UDim2.new(0.15,0,pos,0)
+    btn.TextScaled = true
+    btn.MouseButton1Click:Connect(callback)
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(1,0)
+    return btn
+end
+
+-- [SUPER PULO]
+local superJump = true
+addBtn("Super Pulo", 0.23, function()
+    superJump = not superJump
+end)
+
+-- [SUPER VELOCIDADE]
+local superSpeed = true
+addBtn("Super Velocidade", 0.36, function()
+    superSpeed = not superSpeed
+end)
+
+-- [ANTI HIT]
+local antiHit = true
+addBtn("Anti Hit", 0.49, function()
+    antiHit = not antiHit
+end)
+
+-- [INVISIBILIDADE + Brainrot]
+local invis = true
+addBtn("Invisível + Brainrot", 0.62, function()
+    invis = not invis
+end)
+
+-- [AUTO FARM]
+local autoFarm = true
+addBtn("Auto Farm", 0.75, function()
+    autoFarm = not autoFarm
+end)
+
+-- [LOOP DE FUNÇÕES]
+game:GetService("RunService").RenderStepped:Connect(function()
+    local char = player.Character
+    if not char then return end
+
+    -- Super Jump
+    if superJump then
+        char.Humanoid.JumpPower = 200
+    else
+        char.Humanoid.JumpPower = 50
+    end
+
+    -- Super Speed
+    if superSpeed then
+        char.Humanoid.WalkSpeed = 100
+    else
+        char.Humanoid.WalkSpeed = 16
+    end
+
+    -- Anti Hit
+    if antiHit then
+        for _,v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+                v.Massless = true
+                v.Transparency = 0.2
+            end
+        end
+        if char:FindFirstChildOfClass("ForceField")==nil then
+            Instance.new("ForceField", char)
+        end
+    else
+        local ff = char:FindFirstChildOfClass("ForceField")
+        if ff then ff:Destroy() end
+        for _,v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = true
+                v.Transparency = 0
+            end
+        end
+    end
+
+    -- Invisibilidade + Brainrot
+    if invis then
+        for _,v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then
+                v.Transparency = 1
+            end
+        end
+        -- Tenta pegar item brainrot
+        local bp = workspace:FindFirstChild("Brainrot")
+        if bp and not char:FindFirstChild("Brainrot") then
+            firetouchinterest(char.HumanoidRootPart, bp, 0)
+            wait(0.1)
+            firetouchinterest(char.HumanoidRootPart, bp, 1)
+        end
+        -- Torna brainrot invisível na mão também
+        local tool = char:FindFirstChild("Brainrot") or player.Backpack:FindFirstChild("Brainrot")
+        if tool then
+            for _,v in pairs(tool:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.Transparency = 1
+                end
+            end
+        end
+    else
+        for _,v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then
+                v.Transparency = 0
+            end
+        end
+    end
+
+    -- Auto Farm básico: vai até o Brainrot e pega
+    if autoFarm then
+        local bp = workspace:FindFirstChild("Brainrot")
+        if bp then
+            char.HumanoidRootPart.CFrame = bp.CFrame + Vector3.new(0,3,0)
+            -- Pega brainrot
+            firetouchinterest(char.HumanoidRootPart, bp, 0)
+            wait(0.15)
+            firetouchinterest(char.HumanoidRootPart, bp, 1)
+        end
+    end
+end)
+
+-- [MOVER PAINEL]
+local UIS = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+
+panel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = panel.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+panel.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        panel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- [INFO]
+print("ARTHUR HUB carregado! Painel preto circular, anti hit, invisível, brainrot, super pulo e auto farm.")
