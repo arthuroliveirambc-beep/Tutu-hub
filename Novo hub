@@ -1,0 +1,221 @@
+--[[
+Painel de Script Roblox: Roube um Brainrot
+Funções:
+1. Anti Hit v2 (Invisibilidade + Imunidade ao ataque quando com Brainrot)
+2. Super Pulo
+3. Super Velocidade
+4. ESP Players (Ver jogadores/caixas)
+5. Teleporte para sua base
+6. Atravessar base rival (NoClip)
+
+Observações:
+- Este script é para fins educacionais e uso em jogos próprios. Não use para prejudicar outros jogadores.
+- Pode ser necessário adaptar as referências de objetos/namespaces conforme o mapa do jogo.
+- Requer execução em ambiente Exploit/Executor compatível (ex: Synapse X, KRNL).
+]]
+
+-- GUI Painel
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "PainelBrainrot"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+Frame.Position = UDim2.new(0.1, 0, 0.2, 0)
+Frame.Size = UDim2.new(0, 250, 0, 320)
+Frame.Active = true
+Frame.Draggable = true
+
+local title = Instance.new("TextLabel", Frame)
+title.Text = "Painel Brainrot"
+title.Size = UDim2.new(1,0,0,30)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+
+local function addButton(text, order, callback)
+    local btn = Instance.new("TextButton", Frame)
+    btn.Text = text
+    btn.Size = UDim2.new(1, -20, 0, 35)
+    btn.Position = UDim2.new(0, 10, 0, 40 + (order-1)*45)
+    btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 18
+    btn.MouseButton1Click:Connect(callback)
+    btn.AutoButtonColor = true
+    return btn
+end
+
+-- 1. Anti Hit v2
+local antiHitActive = true
+local invisConn, immuneConn
+addButton("1. Anti Hit v2", 1, function()
+    antiHitActive = not antiHitActive
+    if antiHitActive then
+        -- Invisibilidade e Imunidade quando com Brainrot
+        local plr = game.Players.LocalPlayer
+        local char = plr.Character or plr.CharacterAdded:Wait()
+        -- Invisível
+        for _,v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                v.Transparency = 1
+            elseif v:IsA("Decal") then
+                v.Transparency = 1
+            end
+        end
+        -- Invisibilidade do Brainrot (assumindo que seja um objeto na Backpack ou Character)
+        local function invisBrainrot()
+            for _,item in pairs(plr.Backpack:GetChildren()) do
+                if item.Name:lower():find("brainrot") then
+                    if item:IsA("Tool") then
+                        for _,desc in pairs(item:GetDescendants()) do
+                            if desc:IsA("BasePart") then desc.Transparency = 1 end
+                        end
+                    end
+                end
+            end
+        end
+        invisBrainrot()
+        -- Imunidade a ataque (simula hitbox ou damage event cancel)
+        immuneConn = char.Humanoid.TakingDamage:Connect(function()
+            if antiHitActive then
+                char.Humanoid.Health = char.Humanoid.Health -- Cancela dano
+            end
+        end)
+        -- Invisível ao morrer/resetar
+        invisConn = plr.CharacterAdded:Connect(function(nchar)
+            wait(0.5)
+            for _,v in pairs(nchar:GetDescendants()) do
+                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                    v.Transparency = 1
+                elseif v:IsA("Decal") then
+                    v.Transparency = 1
+                end
+            end
+        end)
+    else
+        -- Desliga: volta visual e desconecta eventos
+        local plr = game.Players.LocalPlayer
+        local char = plr.Character or plr.CharacterAdded:Wait()
+        for _,v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.Transparency = 0
+            elseif v:IsA("Decal") then
+                v.Transparency = 0
+            end
+        end
+        if immuneConn then immuneConn:Disconnect() end
+        if invisConn then invisConn:Disconnect() end
+    end
+end)
+
+-- 2. Super Pulo
+local superJump = true
+addButton("2. Super Pulo", 2, function()
+    superJump = not superJump
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local hum = char:FindFirstChildWhichIsA("Humanoid")
+    if superJump then
+        hum.UseJumpPower = true
+        hum.JumpPower = 150 -- valor alto
+    else
+        hum.JumpPower = 50 -- valor padrão Roblox
+    end
+end)
+
+-- 3. Super Velocidade
+local superSpeed = true
+addButton("3. Super Velocidade", 3, function()
+    superSpeed = not superSpeed
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local hum = char:FindFirstChildWhichIsA("Humanoid")
+    if superSpeed then
+        hum.WalkSpeed = 150 -- valor alto
+    else
+        hum.WalkSpeed = 16 -- valor padrão Roblox
+    end
+end)
+
+-- 4. ESP Players
+local espActive = true
+local espBoxes = {}
+addButton("4. ESP Players", 4, function()
+    espActive = not espActive
+    if espActive then
+        for _,plr in pairs(game.Players:GetPlayers()) do
+            if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local box = Instance.new("BoxHandleAdornment", plr.Character.HumanoidRootPart)
+                box.Size = Vector3.new(4, 6, 2)
+                box.Color3 = Color3.new(1,0,0)
+                box.Transparency = 0.5
+                box.AlwaysOnTop = true
+                box.ZIndex = 10
+                espBoxes[plr] = box
+            end
+        end
+        game.Players.PlayerAdded:Connect(function(newplr)
+            newplr.CharacterAdded:Connect(function(char)
+                wait(0.5)
+                if espActive and char:FindFirstChild("HumanoidRootPart") then
+                    local box = Instance.new("BoxHandleAdornment", char.HumanoidRootPart)
+                    box.Size = Vector3.new(4, 6, 2)
+                    box.Color3 = Color3.new(1,0,0)
+                    box.Transparency = 0.5
+                    box.AlwaysOnTop = true
+                    box.ZIndex = 10
+                    espBoxes[newplr] = box
+                end
+            end)
+        end)
+    else
+        for _,box in pairs(espBoxes) do
+            if box then pcall(function() box:Destroy() end) end
+        end
+        espBoxes = {}
+    end
+end)
+
+-- 5. Teleporte para sua base
+addButton("5. Teleporte para minha base", 5, function()
+    -- Ajuste o nome/model da base se necessário
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local base = workspace:FindFirstChild(plr.Name.."_Base") or workspace:FindFirstChild("Base_"..plr.Name)
+    if base and base:FindFirstChild("Spawn") then
+        char:MoveTo(base.Spawn.Position)
+    else
+        -- Tenta achar por posição inicial
+        char:MoveTo(Vector3.new(0, 5, 0))
+    end
+end)
+
+-- 6. Atravessar base rival (NoClip)
+local noclip = false
+local noclipConn
+addButton("6. Atravessar base rival", 6, function()
+    noclip = not noclip
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    if noclip then
+        noclipConn = game:GetService("RunService").Stepped:Connect(function()
+            for _,v in pairs(char:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide == true then
+                    v.CanCollide = false
+                end
+            end
+        end)
+    else
+        if noclipConn then noclipConn:Disconnect() end
+        for _,v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = true
+            end
+        end
+    end
+end)
+
+-- Fim do script painel
