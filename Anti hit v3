@@ -1,0 +1,133 @@
+--[[
+  Painel de Script: Anti Hit V3 para "Roube um Brainrot" (Roblox)
+  Função: Torna o jogador imune a todos os tipos de ataque (espada, bastão, congelamento) e invisível enquanto segura o item "brainrot".
+  ATENÇÃO: Este script é para fins educacionais. Não utilize para trapaça ou violação de regras de jogos.
+--]]
+
+-- CONFIGURAÇÕES
+local NOME_ITEM = "brainrot" -- Nome exato do item no Backpack/Character
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local mouse = player:GetMouse()
+
+local function invisivel()
+    for _,v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+            v.Transparency = 1
+            if v:FindFirstChildOfClass("Decal") then
+                for _,d in pairs(v:GetChildren()) do
+                    if d:IsA("Decal") then d.Transparency = 1 end
+                end
+            end
+        elseif v:IsA("Accessory") then
+            if v:FindFirstChild("Handle") then
+                v.Handle.Transparency = 1
+            end
+        end
+    end
+    if char:FindFirstChildOfClass("Humanoid") then
+        char.Humanoid.NameDisplayDistance = 0
+    end
+end
+
+local function visivel()
+    for _,v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+            v.Transparency = 0
+            if v:FindFirstChildOfClass("Decal") then
+                for _,d in pairs(v:GetChildren()) do
+                    if d:IsA("Decal") then d.Transparency = 0 end
+                end
+            end
+        elseif v:IsA("Accessory") then
+            if v:FindFirstChild("Handle") then
+                v.Handle.Transparency = 0
+            end
+        end
+    end
+    if char:FindFirstChildOfClass("Humanoid") then
+        char.Humanoid.NameDisplayDistance = 15
+    end
+end
+
+-- ANTI HIT V3: Bloqueia dano de qualquer ataque
+local function ativarAntiHit()
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        -- Remove todas as funções de dano
+        humanoid.HealthChanged:Connect(function()
+            humanoid.Health = humanoid.MaxHealth
+        end)
+        -- Remove todos os efeitos de status
+        humanoid.StatusEffectChanged:Connect(function()
+            humanoid:ClearAllChildren()
+        end)
+        -- Remove qualquer Debuff/Freeze
+        for _, debuff in pairs(char:GetChildren()) do
+            if debuff:FindFirstChild("Freeze") or debuff.Name:lower():find("freeze") then
+                debuff:Destroy()
+            end
+        end
+    end
+    -- Remove todos os danos vindos de Touched (espada, bastão, etc)
+    for _, part in pairs(char:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.Touched:Connect(function() end)
+        end
+    end
+end
+
+local function desativarAntiHit()
+    -- Não é necessário limpar nada, a proteção só fica ativa com o brainrot
+end
+
+-- DETECTA SE O PLAYER ESTÁ COM O BRAINROT NA MÃO
+local function checarBrainrot()
+    local brainrotNaMao = false
+    for _,v in pairs(char:GetChildren()) do
+        if v.Name:lower() == NOME_ITEM then
+            brainrotNaMao = true
+        end
+    end
+    return brainrotNaMao
+end
+
+-- LOOP PRINCIPAL
+game:GetService("RunService").RenderStepped:Connect(function()
+    if checarBrainrot() then
+        invisivel()
+        ativarAntiHit()
+    else
+        visivel()
+        desativarAntiHit()
+    end
+end)
+
+-- PAINEL
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 220, 0, 80)
+Frame.Position = UDim2.new(0.5, -110, 0.05, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Frame.BorderSizePixel = 2
+
+local Label = Instance.new("TextLabel", Frame)
+Label.Size = UDim2.new(1, 0, 1, 0)
+Label.BackgroundTransparency = 1
+Label.TextColor3 = Color3.fromRGB(0,255,0)
+Label.TextStrokeTransparency = 0.6
+Label.Text = "🧠 Anti Hit V3 Ativo\nPegue o brainrot para ativar!"
+Label.Font = Enum.Font.GothamBold
+Label.TextSize = 18
+
+-- Mensagem quando ativado
+game:GetService("RunService").RenderStepped:Connect(function()
+    if checarBrainrot() then
+        Label.Text = "Anti Hit V3: ATIVO\nVocê está INVISÍVEL e IMUNE!"
+        Label.TextColor3 = Color3.fromRGB(0,255,0)
+    else
+        Label.Text = "🧠 Anti Hit V3 Ativo\nPegue o brainrot para ativar!"
+        Label.TextColor3 = Color3.fromRGB(255,255,0)
+    end
+end)
