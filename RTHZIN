@@ -1,0 +1,226 @@
+--[[
+Steal a Brainrot Hub by Copilot
+Funções: Anti Hit, ESP Players, ESP Brainrot, Super Pulo, Super Velocidade
+]]
+
+-- // VARIÁVEIS PRINCIPAIS
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+
+-- // CRIAR GUI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "BrainrotHub"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 260, 0, 310)
+Frame.Position = UDim2.new(0, 100, 0, 100)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+
+local title = Instance.new("TextLabel", Frame)
+title.Text = "Steal a Brainrot Hub"
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+
+function NewButton(text, y, callback)
+    local btn = Instance.new("TextButton", Frame)
+    btn.Size = UDim2.new(1, -20, 0, 36)
+    btn.Position = UDim2.new(0, 10, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.BorderSizePixel = 0
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(220,220,220)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 18
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- // FUNÇÕES
+
+-- ESP PLAYERS
+local espPlayersEnabled = true
+local espPlayersConns = {}
+function espPlayers(toggle)
+    espPlayersEnabled = toggle
+    -- Remove antigos
+    for _,v in pairs(espPlayersConns) do v:Disconnect() end
+    espPlayersConns = {}
+    for _,v in pairs(Workspace:GetChildren()) do
+        if v:IsA("Model") and Players:GetPlayerFromCharacter(v) and v ~= LocalPlayer.Character then
+            if v:FindFirstChild("Head") and not v.Head:FindFirstChild("BrainrotESP") then
+                local bill = Instance.new("BillboardGui", v.Head)
+                bill.Name = "BrainrotESP"
+                bill.Size = UDim2.new(0,80,0,20)
+                bill.Adornee = v.Head
+                bill.AlwaysOnTop = true
+                local txt = Instance.new("TextLabel", bill)
+                txt.Size = UDim2.new(1,0,1,0)
+                txt.BackgroundTransparency = 1
+                txt.Text = v.Name
+                txt.TextColor3 = Color3.new(0,1,1)
+                txt.Font = Enum.Font.GothamBold
+                txt.TextSize = 14
+            end
+        end
+    end
+    -- Atualizador
+    if toggle then
+        table.insert(espPlayersConns, Workspace.ChildAdded:Connect(function(v)
+            if v:IsA("Model") and Players:GetPlayerFromCharacter(v) and v ~= LocalPlayer.Character then
+                wait(1)
+                if v:FindFirstChild("Head") and not v.Head:FindFirstChild("BrainrotESP") then
+                    local bill = Instance.new("BillboardGui", v.Head)
+                    bill.Name = "BrainrotESP"
+                    bill.Size = UDim2.new(0,80,0,20)
+                    bill.Adornee = v.Head
+                    bill.AlwaysOnTop = true
+                    local txt = Instance.new("TextLabel", bill)
+                    txt.Size = UDim2.new(1,0,1,0)
+                    txt.BackgroundTransparency = 1
+                    txt.Text = v.Name
+                    txt.TextColor3 = Color3.new(0,1,1)
+                    txt.Font = Enum.Font.GothamBold
+                    txt.TextSize = 14
+                end
+            end
+        end))
+    else
+        -- Desativa
+        for _,v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BillboardGui") and v.Name == "BrainrotESP" then v:Destroy() end
+        end
+    end
+end
+
+-- ESP BRAINROT
+local espBrainrotEnabled = true
+function espBrainrot(toggle)
+    espBrainrotEnabled = toggle
+    -- Remove antigos
+    for _,v in pairs(Workspace:GetDescendants()) do
+        if v:IsA("BillboardGui") and v.Name == "BrainrotOBJESP" then v:Destroy() end
+    end
+    if toggle then
+        for _,v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name:lower():find("brainrot") then
+                local bill = Instance.new("BillboardGui", v)
+                bill.Name = "BrainrotOBJESP"
+                bill.Size = UDim2.new(0,70,0,20)
+                bill.Adornee = v
+                bill.AlwaysOnTop = true
+                local txt = Instance.new("TextLabel", bill)
+                txt.Size = UDim2.new(1,0,1,0)
+                txt.BackgroundTransparency = 1
+                txt.Text = "BRAINROT"
+                txt.TextColor3 = Color3.new(1,0,0)
+                txt.Font = Enum.Font.GothamBlack
+                txt.TextSize = 14
+            end
+        end
+    end
+end
+
+-- ANTI HIT (só ativa se estiver com brainrot na mão)
+local antiHitEnabled = true
+local lastTool = nil
+function antiHit(toggle)
+    antiHitEnabled = toggle
+end
+
+-- Hook para evitar dano
+local function protectBrainrot()
+    if not antiHitEnabled then return end
+    if not LocalPlayer.Character then return end
+    -- Checa se está com brainrot na mão (procure pela tool 'brainrot' no backpack ou character)
+    local hasBrainrot = false
+    for _,v in pairs(LocalPlayer.Character:GetChildren()) do
+        if v:IsA("Tool") and v.Name:lower():find("brainrot") then
+            hasBrainrot = true
+            lastTool = v
+        end
+    end
+    if hasBrainrot then
+        -- Impede dano removendo Humanoid's "TakeDamage"
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.Health = math.huge
+            hum.MaxHealth = math.huge
+            hum:GetPropertyChangedSignal("Health"):Connect(function()
+                if hum.Health < hum.MaxHealth then
+                    hum.Health = hum.MaxHealth
+                end
+            end)
+        end
+        -- Opcional: desconecta hitbox, etc (dependendo do jogo)
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    protectBrainrot()
+end)
+
+-- SUPER PULO
+local superJumpEnabled = true
+local jumpPowerNormal = 50
+local jumpPowerSuper = 200
+function setSuperJump(toggle)
+    superJumpEnabled = toggle
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.UseJumpPower = true
+            hum.JumpPower = toggle and jumpPowerSuper or jumpPowerNormal
+        end
+    end
+end
+
+-- SUPER VELOCIDADE
+local superSpeedEnabled = true
+local speedNormal = 16
+local speedSuper = 60
+function setSuperSpeed(toggle)
+    superSpeedEnabled = toggle
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = toggle and speedSuper or speedNormal
+        end
+    end
+end
+
+-- // BOTÕES
+NewButton("[TOGGLE] ESP Players", 50, function()
+    espPlayers(not espPlayersEnabled)
+end)
+NewButton("[TOGGLE] ESP Brainrot", 90, function()
+    espBrainrot(not espBrainrotEnabled)
+end)
+NewButton("[TOGGLE] Anti Hit c/ Brainrot", 130, function()
+    antiHit(not antiHitEnabled)
+end)
+NewButton("[TOGGLE] Super Pulo", 170, function()
+    setSuperJump(not superJumpEnabled)
+end)
+NewButton("[TOGGLE] Super Velocidade", 210, function()
+    setSuperSpeed(not superSpeedEnabled)
+end)
+NewButton("Fechar Painel", 250, function()
+    ScreenGui:Destroy()
+end)
+
+-- // AUTO ATUALIZAÇÃO SPEED/JUMP
+LocalPlayer.CharacterAdded:Connect(function(char)
+    wait(1)
+    if superSpeedEnabled then setSuperSpeed(true) end
+    if superJumpEnabled then setSuperJump(true) end
+end)
