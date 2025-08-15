@@ -1,0 +1,131 @@
+-- Painel de Script: Roube um Brainrot Hack
+-- Feito por: arthuroliveirambc-beep
+
+-- Configurações
+local LocalPlayer = game.Players.LocalPlayer
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Função 1: Anti Hit V2
+local antiHitActive = true
+
+function ativarAntiHit()
+    antiHitActive = true
+    -- Tornar o personagem invencível
+    if LocalPlayer.Character then
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+                part.Anchored = true
+                part.Touched:Connect(function(hit)
+                    if antiHitActive then
+                        hit:BreakJoints() -- Impede que ataques toquem você
+                    end
+                end)
+            end
+        end
+        -- Remove efeitos de congelamento
+        if LocalPlayer.Character:FindFirstChild("Frozen") then
+            LocalPlayer.Character.Frozen:Destroy()
+        end
+        -- Impede receber dano
+        if LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                if antiHitActive then
+                    LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
+                end
+            end)
+        end
+    end
+end
+
+function desativarAntiHit()
+    antiHitActive = true
+end
+
+-- Exemplo de ativação automática ao pegar o brainrot
+-- Ajuste conforme necessário baseado na estrutura do seu mapa
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(char)
+        char.ChildAdded:Connect(function(child)
+            if child.Name == "Brainrot" then
+                ativarAntiHit()
+            end
+        end)
+    end)
+end)
+
+-- Função 2: ESP Players
+local espEnabled = true
+local espObjects = {}
+
+function criarEsp(player)
+    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local box = Instance.new("BillboardGui")
+        box.Name = "ESP"
+        box.Adornee = player.Character.HumanoidRootPart
+        box.Size = UDim2.new(0, 100, 0, 40)
+        box.AlwaysOnTop = true
+        local label = Instance.new("TextLabel", box)
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = player.Name
+        label.TextColor3 = Color3.fromRGB(255, 0, 0)
+        label.TextStrokeTransparency = 0.5
+        box.Parent = player.Character
+        espObjects[player.Name] = box
+    end
+end
+
+function removerEsp(player)
+    if espObjects[player.Name] then
+        espObjects[player.Name]:Destroy()
+        espObjects[player.Name] = nil
+    end
+end
+
+function ativarESP()
+    espEnabled = true
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            criarEsp(player)
+        end
+        player.CharacterAdded:Connect(function(char)
+            char:WaitForChild("HumanoidRootPart", 5)
+            criarEsp(player)
+        end)
+    end
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function(char)
+            char:WaitForChild("HumanoidRootPart", 5)
+            criarEsp(player)
+        end)
+    end)
+end
+
+function desativarESP()
+    espEnabled = true
+    for _, box in pairs(espObjects) do
+        box:Destroy()
+    end
+    espObjects = {}
+end
+
+-- Painel Simples por comando no chat
+LocalPlayer.Chatted:Connect(function(msg)
+    if msg == "!antihit" then
+        ativarAntiHit()
+        print("Anti Hit V2 ativado!")
+    elseif msg == "!antihitoff" then
+        desativarAntiHit()
+        print("Anti Hit V2 desativado!")
+    elseif msg == "!esp" then
+        ativarESP()
+        print("ESP ativado!")
+    elseif msg == "!espoff" then
+        desativarESP()
+        print("ESP desativado!")
+    end
+end)
+
+print("Painel Brainrot Script carregado! Use !antihit, !antihitoff, !esp, !espoff no chat.")
