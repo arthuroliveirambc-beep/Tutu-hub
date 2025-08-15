@@ -1,0 +1,219 @@
+--[[
+TUTU HUB01 Script para Roblox (Steal a Brainrot)
+Feito para uso educacional e privado.
+
+Painel com 4 funções:
+1. ESP Players
+2. Anti-Hit (Invisível e imune a gelo/batidas)
+3. Super Pulo
+4. Super Velocidade
+
+Feito por: arthuroliveirambc-beep
+--]]
+
+-- Serviços
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+-- UI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "TUTU_HUB01_GUI"
+ScreenGui.Parent = game.CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 250, 0, 350)
+Frame.Position = UDim2.new(0.02, 0, 0.2, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Text = "TUTU HUB01"
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 0, 0)
+Title.Font = Enum.Font.FredokaOne
+Title.TextScaled = true
+Title.Parent = Frame
+
+-- Função botão
+local function criarBotao(nome, ordem)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, -20, 0, 50)
+    Button.Position = UDim2.new(0, 10, 0, 60 + ((ordem-1)*60))
+    Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    Button.TextColor3 = Color3.fromRGB(255,255,255)
+    Button.Text = nome
+    Button.Font = Enum.Font.FredokaOne
+    Button.TextScaled = true
+    Button.BorderSizePixel = 0
+    Button.Parent = Frame
+    return Button
+end
+
+-- 1. ESP Players
+local espLigado = true
+local espObjects = {}
+
+local function criarESP(player)
+    if player == LocalPlayer then return end
+    if espObjects[player] then return end
+
+    local box = Instance.new("BillboardGui")
+    box.Name = "ESP"
+    box.Adornee = player.Character and player.Character:FindFirstChild("Head")
+    box.AlwaysOnTop = true
+    box.Size = UDim2.new(0, 100, 0, 30)
+
+    local texto = Instance.new("TextLabel")
+    texto.BackgroundTransparency = 1
+    texto.Size = UDim2.new(1,0,1,0)
+    texto.Text = player.Name
+    texto.TextColor3 = Color3.new(1,0,0)
+    texto.Font = Enum.Font.FredokaOne
+    texto.TextScaled = true
+    texto.Parent = box
+
+    if player.Character and player.Character:FindFirstChild("Head") then
+        box.Parent = player.Character.Head
+        espObjects[player] = box
+    end
+
+    player.CharacterAdded:Connect(function(char)
+        if box then box:Destroy() end
+        local newBox = box:Clone()
+        local head = char:WaitForChild("Head",5)
+        if head then
+            newBox.Adornee = head
+            newBox.Parent = head
+            espObjects[player] = newBox
+        end
+    end)
+end
+
+local function removerESP(player)
+    if espObjects[player] then
+        espObjects[player]:Destroy()
+        espObjects[player] = nil
+    end
+end
+
+local function ativarESP()
+    espLigado = not espLigado
+    if espLigado then
+        for _,plr in pairs(Players:GetPlayers()) do
+            criarESP(plr)
+        end
+        Players.PlayerAdded:Connect(criarESP)
+        Players.PlayerRemoving:Connect(removerESP)
+    else
+        for _,obj in pairs(espObjects) do
+            obj:Destroy()
+        end
+        espObjects = {}
+    end
+end
+
+local btnESP = criarBotao("ESP Players", 1)
+btnESP.MouseButton1Click:Connect(ativarESP)
+
+-- 2. Anti-Hit
+local antiHitLigado = true
+local function ativarAntiHit()
+    antiHitLigado = not antiHitLigado
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    if antiHitLigado then
+        -- Invisibilidade
+        for _,v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.LocalTransparencyModifier = 1
+                v.CanCollide = false
+            end
+            if v:IsA("Decal") then
+                v.Transparency = 1
+            end
+        end
+        -- Remove scripts/danos/gelo
+        for _,obj in pairs(char:GetChildren()) do
+            if obj:IsA("Script") or obj:IsA("LocalScript") then
+                pcall(function() obj.Disabled = true end)
+            end
+            if obj.Name:lower():find("ice") or obj.Name:lower():find("freeze") then
+                pcall(function() obj:Destroy() end)
+            end
+        end
+        -- Imunidade básica
+        char.DescendantAdded:Connect(function(desc)
+            if desc.Name:lower():find("ice") or desc.Name:lower():find("freeze") then
+                pcall(function() desc:Destroy() end)
+            end
+        end)
+    else
+        -- Volta ao normal
+        for _,v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.LocalTransparencyModifier = 0
+                v.CanCollide = true
+            end
+            if v:IsA("Decal") then
+                v.Transparency = 0
+            end
+        end
+        -- Não há como restaurar scripts removidos, recarregue o personagem se necessário
+    end
+end
+
+local btnAntiHit = criarBotao("Anti Hit", 2)
+btnAntiHit.MouseButton1Click:Connect(ativarAntiHit)
+
+-- 3. Super Pulo
+local superPuloLigado = true
+local originalJump
+local function ativarSuperPulo()
+    superPuloLigado = not superPuloLigado
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChildWhichIsA("Humanoid") then return end
+    local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+    if superPuloLigado then
+        originalJump = humanoid.JumpPower
+        humanoid.JumpPower = 200
+    else
+        humanoid.JumpPower = originalJump or 50
+    end
+end
+
+local btnSuperPulo = criarBotao("Super Pulo", 3)
+btnSuperPulo.MouseButton1Click:Connect(ativarSuperPulo)
+
+-- 4. Super Velocidade
+local superVelLigado = true
+local originalSpeed
+local function ativarSuperVel()
+    superVelLigado = not superVelLigado
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChildWhichIsA("Humanoid") then return end
+    local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+    if superVelLigado then
+        originalSpeed = humanoid.WalkSpeed
+        humanoid.WalkSpeed = 100
+    else
+        humanoid.WalkSpeed = originalSpeed or 16
+    end
+end
+
+local btnSuperVel = criarBotao("Super Velocidade", 4)
+btnSuperVel.MouseButton1Click:Connect(ativarSuperVel)
+
+-- Aviso de uso
+StarterGui:SetCore("SendNotification", {
+    Title = "TUTU HUB01",
+    Text = "Script ativado com sucesso!",
+    Duration = 5
+})
+
+-- Fim do Script
