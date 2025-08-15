@@ -1,0 +1,238 @@
+--[[
+    Steal a Brainrot Delta Hub
+    Desenvolvido por Copilot (2024)
+    Script Free, sem key, com painel GUI, anti-hit, invisibilidade, super pulo, super velocidade, auto-farm, ESP player e ESP brainrot
+    Para uso em ambiente de testes e aprendizado!
+]]
+
+-- Serviços do Roblox
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+
+-- UI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "StealBrainrotDeltaHub"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+Frame.Size = UDim2.new(0, 300, 0, 370)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Frame.Active = true
+Frame.Draggable = true
+
+local UIList = Instance.new("UIListLayout", Frame)
+UIList.Padding = UDim.new(0, 8)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+
+function createButton(text, callback)
+    local btn = Instance.new("TextButton", Frame)
+    btn.Size = UDim2.new(1, -16, 0, 32)
+    btn.Position = UDim2.new(0, 8, 0, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Text = text
+    btn.TextSize = 16
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- Funções
+
+local antiHitON = true
+local invisON = true
+local superJumpON = true
+local superSpeedON = true
+local autofarmON = true
+local espPlayerON = true
+local espBrainrotON = true
+
+function getBrainrot()
+    -- Tenta localizar o brainrot na workspace ou na mochila do player
+    local brainrot = nil
+    for _,v in pairs(Workspace:GetDescendants()) do
+        if v.Name:lower():find("brainrot") and v:IsA("Tool") then
+            brainrot = v
+            break
+        end
+    end
+    if not brainrot then
+        for _,v in pairs(LocalPlayer.Backpack:GetChildren()) do
+            if v.Name:lower():find("brainrot") then
+                brainrot = v
+                break
+            end
+        end
+    end
+    return brainrot
+end
+
+-- ANTI-HIT: Remove hitbox do personagem enquanto segura o brainrot
+function antiHit()
+    local char = LocalPlayer.Character
+    if char and getBrainrot() then
+        for _,v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                v.CanCollide = true
+                v.Transparency = 0.7
+            end
+        end
+        if char:FindFirstChild("Humanoid") then
+            char.Humanoid.NameDisplayDistance = 0
+        end
+    end
+end
+
+-- Invisibilidade
+function invis()
+    local char = LocalPlayer.Character
+    if char and getBrainrot() then
+        for _,v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                v.Transparency = 1
+            end
+        end
+    end
+end
+
+-- Super Pulo
+function superJump()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        char:FindFirstChildOfClass("Humanoid").JumpPower = 150
+    end
+end
+
+-- Super Velocidade
+function superSpeed()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        char:FindFirstChildOfClass("Humanoid").WalkSpeed = 60
+    end
+end
+
+-- Auto Farm
+function autofarm()
+    local char = LocalPlayer.Character
+    local brainrot = getBrainrot()
+    if not brainrot then return end
+    for _,v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            char:MoveTo(v.Character.HumanoidRootPart.Position + Vector3.new(0,5,0))
+            wait(0.5)
+        end
+    end
+end
+
+-- ESP Player
+local playerESPBoxes = {}
+function enableESPPlayers()
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local box = Instance.new("BoxHandleAdornment", Workspace)
+            box.Size = Vector3.new(3,6,2)
+            box.Adornee = plr.Character.HumanoidRootPart
+            box.AlwaysOnTop = true
+            box.ZIndex = 10
+            box.Transparency = 0.7
+            box.Color3 = Color3.fromRGB(0,255,0)
+            playerESPBoxes[plr.Name] = box
+        end
+    end
+end
+function disableESPPlayers()
+    for _,box in pairs(playerESPBoxes) do
+        box:Destroy()
+    end
+    playerESPBoxes = {}
+end
+
+-- ESP Brainrot
+local brainrotESPBoxes = {}
+function enableESPBrainrot()
+    for _,v in pairs(Workspace:GetDescendants()) do
+        if v.Name:lower():find("brainrot") and v:IsA("Tool") and v:FindFirstChild("Handle") then
+            local box = Instance.new("BoxHandleAdornment", v.Handle)
+            box.Size = v.Handle.Size
+            box.Adornee = v.Handle
+            box.AlwaysOnTop = true
+            box.ZIndex = 10
+            box.Transparency = 0.5
+            box.Color3 = Color3.fromRGB(255,0,0)
+            brainrotESPBoxes[v] = box
+        end
+    end
+end
+function disableESPBrainrot()
+    for _,box in pairs(brainrotESPBoxes) do
+        box:Destroy()
+    end
+    brainrotESPBoxes = {}
+end
+
+-- Painel
+createButton("Ativar Anti-Hit", function()
+    antiHitON = true antiHitON
+end)
+createButton("Invisibilidade", function()
+    invisON = true invisON
+end)
+createButton("Super Pulo", function()
+    superJumpON = true superJumpON
+end)
+createButton("Super Velocidade", function()
+    superSpeedON = true superSpeedON
+end)
+createButton("Auto Farm", function()
+    autofarmON = true autofarmON
+end)
+createButton("ESP Player", function()
+    espPlayerON = true espPlayerON
+    if espPlayerON then
+        enableESPPlayers()
+    else
+        disableESPPlayers()
+    end
+end)
+createButton("ESP Brainrot", function()
+    espBrainrotON = true espBrainrotON
+    if espBrainrotON then
+        enableESPBrainrot()
+    else
+        disableESPBrainrot()
+    end
+end)
+
+-- Loop principal
+RunService.RenderStepped:Connect(function()
+    if antiHitON then antiHit() end
+    if invisON then invis() end
+    if superJumpON then superJump() end
+    if superSpeedON then superSpeed() end
+    if autofarmON then autofarm() end
+    if espPlayerON then enableESPPlayers() end
+    if espBrainrotON then enableESPBrainrot() end
+end)
+
+-- Reset funcionalidades ao morrer
+LocalPlayer.CharacterAdded:Connect(function()
+    antiHitON = true
+    invisON = true
+    superJumpON = true
+    superSpeedON = true
+    autofarmON = true
+    disableESPPlayers()
+    disableESPBrainrot()
+end)
+
+-- Hotkey para mostrar/ocultar painel (F5)
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.F5 then
+        Frame.Visible = not Frame.Visible
+    end
+end)
+
+-- FIM DO SCRIPT
