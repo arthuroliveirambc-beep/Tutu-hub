@@ -1,0 +1,196 @@
+-- TUTU HUB SCRIPT PARA "STEAL A BRAINROT"
+-- COLOQUE EM StarterGui COMO LocalScript
+
+local player = game.Players.LocalPlayer
+
+-- Criar GUI
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "TUTU_HUB"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 400)
+frame.Position = UDim2.new(0, 20, 0, 100)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Active = true
+frame.Draggable = true
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Text = "TUTU HUB"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.FredokaOne
+title.TextSize = 32
+
+-- Funções
+local function createButton(text, posY, callback)
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1, -20, 0, 35)
+    btn.Position = UDim2.new(0, 10, 0, posY)
+    btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.FredokaOne
+    btn.Text = text
+    btn.TextSize = 22
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- Variáveis de controle
+local antiHitOn = true
+local espPlayersOn = true
+local espBrainrotOn = true
+local autoFarmOn = true
+local autoStealOn = true
+local superSpeedOn = true
+local superJumpOn = true
+
+-- Função: Anti Hit
+local function setAntiHit(state)
+    antiHitOn = state
+    if antiHitOn then
+        -- Invisível
+        for _,v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                v.Transparency = 1
+            end
+        end
+        -- Invencível (simples: Remove Humanoid's health change)
+        local hum = player.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.HealthChanged:Connect(function(newHealth)
+                if antiHitOn and player.Backpack:FindFirstChild("Brainrot") or (player.Character:FindFirstChild("Brainrot")) then
+                    hum.Health = hum.MaxHealth
+                end
+            end)
+        end
+    else
+        -- Visível
+        for _,v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                v.Transparency = 0
+            end
+        end
+    end
+end
+
+-- Função: ESP Players
+local function setESPPlayers(state)
+    espPlayersOn = state
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
+            if state then
+                if not plr.Character.Head:FindFirstChild("ESP") then
+                    local bb = Instance.new("BillboardGui", plr.Character.Head)
+                    bb.Name = "ESP"
+                    bb.Size = UDim2.new(0,100,0,40)
+                    bb.AlwaysOnTop = true
+                    local tl = Instance.new("TextLabel", bb)
+                    tl.Size = UDim2.new(1,0,1,0)
+                    tl.Text = plr.Name
+                    tl.TextColor3 = Color3.new(1,0,0)
+                    tl.BackgroundTransparency = 1
+                end
+            else
+                if plr.Character.Head:FindFirstChild("ESP") then
+                    plr.Character.Head.ESP:Destroy()
+                end
+            end
+        end
+    end
+end
+
+-- Função: ESP Brainrot
+local function setESPBrainrot(state)
+    espBrainrotOn = state
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Backpack:FindFirstChild("Brainrot") then
+            if state then
+                if plr.Character and plr.Character:FindFirstChild("Head") then
+                    if not plr.Character.Head:FindFirstChild("ESPBrainrot") then
+                        local bb = Instance.new("BillboardGui", plr.Character.Head)
+                        bb.Name = "ESPBrainrot"
+                        bb.Size = UDim2.new(0,120,0,40)
+                        bb.AlwaysOnTop = true
+                        local tl = Instance.new("TextLabel", bb)
+                        tl.Size = UDim2.new(1,0,1,0)
+                        tl.Text = "Brainrot: " .. plr.Backpack.Brainrot.Name
+                        tl.TextColor3 = Color3.fromRGB(0,255,0)
+                        tl.BackgroundTransparency = 1
+                    end
+                end
+            else
+                if plr.Character and plr.Character:FindFirstChild("Head") then
+                    if plr.Character.Head:FindFirstChild("ESPBrainrot") then
+                        plr.Character.Head.ESPBrainrot:Destroy()
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Função: Auto Farm
+local function autoFarm()
+    while autoFarmOn do
+        -- Procura por brainrots no mapa
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Tool") and v.Name == "Brainrot" then
+                firetouchinterest(player.Character.HumanoidRootPart, v.Handle, 0)
+                wait(0.1)
+                firetouchinterest(player.Character.HumanoidRootPart, v.Handle, 1)
+            end
+        end
+        wait(1)
+    end
+end
+
+-- Função: Auto Steal
+local function autoSteal()
+    while autoStealOn do
+        if player.Backpack:FindFirstChild("Brainrot") then
+            -- Teleporta para a base (ajuste a posição conforme o mapa)
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0,10,0))
+        end
+        wait(1)
+    end
+end
+
+-- Função: Super Speed
+local function setSuperSpeed(state)
+    superSpeedOn = state
+    if state then
+        player.Character.Humanoid.WalkSpeed = 500
+    else
+        player.Character.Humanoid.WalkSpeed = 16
+    end
+end
+
+-- Função: Super Jump
+local function setSuperJump(state)
+    superJumpOn = state
+    if state then
+        player.Character.Humanoid.JumpPower = 100
+    else
+        player.Character.Humanoid.JumpPower = 50
+    end
+end
+
+-- Botões
+createButton("Anti Hit", 60, function() setAntiHit(not antiHitOn) end)
+createButton("ESP Players", 100, function() setESPPlayers(not espPlayersOn) end)
+createButton("ESP Brainrot", 140, function() setESPBrainrot(not espBrainrotOn) end)
+createButton("Auto Farm", 180, function()
+    autoFarmOn = not autoFarmOn
+    if autoFarmOn then spawn(autoFarm) end
+end)
+createButton("Auto Steal", 220, function()
+    autoStealOn = not autoStealOn
+    if autoStealOn then spawn(autoSteal) end
+end)
+createButton("Super Velocidade", 260, function() setSuperSpeed(not superSpeedOn) end)
+createButton("Super Pulo", 300, function() setSuperJump(not superJumpOn) end)
+
+-- Atualizar ESP sempre que jogadores entram ou saem
+game.Players.PlayerAdded:Connect(function(plr) if espPlayersOn then setESPPlayers(true) end end)
+game.Players.PlayerRemoving:Connect(function(plr) if espPlayersOn then setESPPlayers(true) end end)
