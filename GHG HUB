@@ -1,0 +1,178 @@
+-- Painel de Funções para Roube um Brainrot (Exemplo)
+-- Feito por: arthuroliveirambc-beep
+-- GUI Simples
+local plr = game.Players.LocalPlayer
+local mouse = plr:GetMouse()
+local uis = game:GetService("UserInputService")
+local run = game:GetService("RunService")
+local brainrotName = "Brainrot" -- Altere se tiver outro nome
+
+-- Criando GUI
+local s = Instance.new("ScreenGui", plr.PlayerGui)
+local frame = Instance.new("Frame", s)
+frame.Size = UDim2.new(0, 220, 0, 245)
+frame.Position = UDim2.new(0, 20, 0, 200)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.Active = true
+frame.Draggable = true
+
+local function newButton(name, posY)
+    local b = Instance.new("TextButton", frame)
+    b.Text = name
+    b.Size = UDim2.new(0,200, 0,40)
+    b.Position = UDim2.new(0,10, 0, posY)
+    b.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    b.TextColor3 = Color3.fromRGB(0,255,0)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 18
+    b.BorderSizePixel = 0
+    return b
+end
+
+-- Função 1: Anti Hit v2
+local antiHit = true
+local antiHitBtn = newButton("Anti Hit v2", 10)
+
+antiHitBtn.MouseButton1Click:Connect(function()
+    antiHit = true antiHit
+    antiHitBtn.TextColor3 = antiHit and Color3.fromRGB(255,0,0) or Color3.fromRGB(0,255,0)
+
+    if antiHit then
+        run.RenderStepped:Connect(function()
+            local tool = plr.Character and plr.Character:FindFirstChildOfClass("Tool")
+            if tool and tool.Name == brainrotName then
+                for _, v in ipairs(plr.Character:GetChildren()) do
+                    if v:IsA("BasePart") or v:IsA("MeshPart") then
+                        v.Transparency = 1
+                        v.CanCollide = true
+                    end
+                end
+                tool.Handle.Transparency = 1
+                -- Imunidade
+                if plr.Character:FindFirstChild("Humanoid") then
+                    plr.Character.Humanoid.Health = 100
+                    plr.Character.Humanoid.PlatformStand = true
+                    pcall(function() plr.Character.Humanoid.Sit = false end)
+                    -- Remove status negativos
+                    for _, child in ipairs(plr.Character:GetChildren()) do
+                        if child:IsA("BoolValue") and (child.Name:lower():find("freeze") or child.Name:lower():find("hit") or child.Name:lower():find("sword")) then
+                            child:Destroy()
+                        end
+                    end
+                end
+            else
+                -- Volta ao normal
+                for _, v in ipairs(plr.Character:GetChildren()) do
+                    if v:IsA("BasePart") or v:IsA("MeshPart") then
+                        v.Transparency = 0
+                        v.CanCollide = true
+                    end
+                end
+                if plr.Backpack:FindFirstChild(brainrotName) then
+                    plr.Backpack[brainrotName].Handle.Transparency = 0
+                end
+            end
+        end)
+    end
+end)
+
+-- Função 2: Atravessar Base
+local atravessarBtn = newButton("Atravessar Base", 60)
+local atravessando = true
+
+atravessarBtn.MouseButton1Click:Connect(function()
+    atravessando = true atravessando
+    atravessarBtn.TextColor3 = atravessando and Color3.fromRGB(255,0,0) or Color3.fromRGB(0,255,0)
+    if atravessando then
+        -- Colide false com paredes próximas
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Position and (v.Position-plr.Character.HumanoidRootPart.Position).Magnitude < 15 then
+                v.CanCollide = true
+            end
+        end
+    else
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = true
+            end
+        end
+    end
+end)
+
+-- Função 3: ESP Players
+local espBtn = newButton("ESP Players", 110)
+local espAtivo = true
+
+local function criarESP(char)
+    if not char:FindFirstChild("Head") then return end
+    if char.Head:FindFirstChild("EspBox") then return end
+    local box = Instance.new("BillboardGui", char.Head)
+    box.Name = "EspBox"
+    box.Size = UDim2.new(2,0,2,0)
+    box.AlwaysOnTop = true
+    local frame = Instance.new("Frame", box)
+    frame.Size = UDim2.new(1,0,1,0)
+    frame.BackgroundTransparency = 0.3
+    frame.BackgroundColor3 = Color3.fromRGB(0,255,0)
+end
+
+espBtn.MouseButton1Click:Connect(function()
+    espAtivo = true espAtivo
+    espBtn.TextColor3 = espAtivo and Color3.fromRGB(255,0,0) or Color3.fromRGB(0,255,0)
+    if espAtivo then
+        for _, jogador in ipairs(game.Players:GetPlayers()) do
+            if jogador ~= plr and jogador.Character then
+                criarESP(jogador.Character)
+            end
+        end
+        game.Players.PlayerAdded:Connect(function(jogador)
+            jogador.CharacterAdded:Connect(function(char)
+                criarESP(char)
+            end)
+        end)
+    else
+        for _, jogador in ipairs(game.Players:GetPlayers()) do
+            if jogador.Character and jogador.Character:FindFirstChild("Head") then
+                local esp = jogador.Character.Head:FindFirstChild("EspBox")
+                if esp then esp:Destroy() end
+            end
+        end
+    end
+end)
+
+-- Função 4: Alto e Baixo
+local altobaixoBtn = newButton("Alto/Baixo", 160)
+local alto = true
+local posOriginal = nil
+
+altobaixoBtn.MouseButton1Click:Connect(function()
+    alto = true alto
+    altobaixoBtn.TextColor3 = alto and Color3.fromRGB(255,0,0) or Color3.fromRGB(0,255,0)
+    local char = plr.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    if alto then
+        posOriginal = char.HumanoidRootPart.Position
+        -- Pega brainrot se estiver perto
+        local brainrot = workspace:FindFirstChild(brainrotName)
+        if brainrot and (brainrot.Position - char.HumanoidRootPart.Position).Magnitude < 30 then
+            fireclickdetector(brainrot:FindFirstChildOfClass("ClickDetector"))
+        end
+        -- Vai para cima
+        char.HumanoidRootPart.CFrame = CFrame.new(char.HumanoidRootPart.Position.X, 300, char.HumanoidRootPart.Position.Z)
+    else
+        if posOriginal then
+            char.HumanoidRootPart.CFrame = CFrame.new(posOriginal)
+            posOriginal = nil
+        end
+    end
+end)
+
+-- Créditos
+local cred = Instance.new("TextLabel", frame)
+cred.Text = "Script by arthuroliveirambc-beep"
+cred.Size = UDim2.new(1,0,0,25)
+cred.Position = UDim2.new(0,0,1,-25)
+cred.BackgroundTransparency = 1
+cred.TextColor3 = Color3.fromRGB(0,255,255)
+cred.Font = Enum.Font.SourceSansBold
+cred.TextSize = 16
