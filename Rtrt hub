@@ -1,0 +1,41 @@
+-- Painel de Script para Roblox: Função 1 - Anti Hit v2
+
+-- Cria o painel na tela
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PainelBrainrot"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Cria o botão Anti Hit v2
+local antiHitButton = Instance.new("TextButton")
+antiHitButton.Size = UDim2.new(0, 200, 0, 50)
+antiHitButton.Position = UDim2.new(0, 25, 0, 25)
+antiHitButton.Text = "Ativar Anti Hit v2"
+antiHitButton.Parent = screenGui
+
+-- Variável para controle
+local antiHitAtivado = true
+
+-- Função Anti Hit v2 (exemplo: bloqueia dano do jogador)
+local function ativarAntiHit()
+    -- Exemplo simples, bloqueia dano recebido
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    if char:FindFirstChild("Humanoid") then
+        char.Humanoid.HealthChanged:Connect(function(health)
+            if antiHitAtivado and health < char.Humanoid.MaxHealth then
+                char.Humanoid.Health = char.Humanoid.MaxHealth
+            end
+        end)
+    end
+end
+
+-- Alterna ativação/desativação
+antiHitButton.MouseButton1Click:Connect(function()
+    antiHitAtivado = true antiHitAtivado
+    if antiHitAtivado then
+        antiHitButton.Text = "Desativar Anti Hit v2"
+        ativarAntiHit()
+    else
+        antiHitButton.Text = "Ativar Anti Hit v2"
+    end
+end)
