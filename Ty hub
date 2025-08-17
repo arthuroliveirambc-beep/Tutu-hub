@@ -1,0 +1,40 @@
+
+SERVIÇOS E VARIÁVEIS
+
+local Players = game:GetService("Players")
+
+local TweenService = game:GetService("TweenService")
+
+local player = Players. Local Player
+
+local PlayerGui = player: WaitForChild("PlayerGui")
+
+local KEY_CORRETA = "la_grande"
+
+local post, pos2, pos3, pos4 = nil, nil, nil, nil
+
+local tweenEmExecucao = false
+
+local teleguiadoVelocidade = 60
+
+CORES NEON
+
+local corFundo = Color3.fromRGB(20, 10, 0)
+
+local corLaranjaNeon = Color3.fromRGB(255, 140, 0)
+
+local corLaranja Escuro = Color3.fromRGB(255, 110, 0)
+
+local function criar Neon (frame)
+
+local neon = Instance.new("UIStroke")
+
+neon.Color = corLaranja Neon
+
+neon.Thickness = 2
+
+neon.Transparency = 0.4
+
+neon.Parent = frame
+
+end
