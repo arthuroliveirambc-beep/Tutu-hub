@@ -1,0 +1,85 @@
+-- Painel LocalScript - by ChatGPT
+-- Esse script cria uma GUI com 2 botões: Anti-Hit e Super Jump/Speed
+
+-- Cria a ScreenGui
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "PainelArthur"
+
+-- Cria Frame principal
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+
+-- Cria botão Anti-Hit
+local antiHitBtn = Instance.new("TextButton", frame)
+antiHitBtn.Size = UDim2.new(1, -10, 0, 50)
+antiHitBtn.Position = UDim2.new(0, 5, 0, 10)
+antiHitBtn.Text = "Ativar Anti-Hit"
+antiHitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+antiHitBtn.TextColor3 = Color3.new(1,1,1)
+antiHitBtn.Font = Enum.Font.SourceSansBold
+antiHitBtn.TextSize = 18
+
+-- Cria botão Super Jump/Speed
+local superBtn = Instance.new("TextButton", frame)
+superBtn.Size = UDim2.new(1, -10, 0, 50)
+superBtn.Position = UDim2.new(0, 5, 0, 70)
+superBtn.Text = "Ativar Super Pulo/Velocidade"
+superBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+superBtn.TextColor3 = Color3.new(1,1,1)
+superBtn.Font = Enum.Font.SourceSansBold
+superBtn.TextSize = 18
+
+-- Função Anti-Hit (só funciona pro Arthur)
+local antiHitAtivado = true
+antiHitBtn.MouseButton1Click:Connect(function()
+	if player.Name == "arthur444a_6" then
+		antiHitAtivado = not antiHitAtivado
+		if antiHitAtivado then
+			antiHitBtn.Text = "Anti-Hit Ativado"
+			
+			-- Deixa o corpo quadrado
+			for _, part in pairs(player.Character:GetDescendants()) do
+				if part:IsA("Mesh") or part:IsA("SpecialMesh") then
+					part:Destroy()
+				end
+			end
+			
+			-- Brainrot invisível (se estiver na mão)
+			local tool = player.Character:FindFirstChild("Brainrot")
+			if tool then
+				for _, v in pairs(tool:GetDescendants()) do
+					if v:IsA("BasePart") then
+						v.Transparency = 1
+					end
+				end
+			end
+		else
+			antiHitBtn.Text = "Ativar Anti-Hit"
+			-- Não desfaz, só deixa pra reentrar no mapa se quiser resetar
+		end
+	else
+		antiHitBtn.Text = " Permissão"
+	end
+end)
+
+-- Função Super Pulo + Velocidade
+local superAtivo = true
+superBtn.MouseButton1Click:Connect(function()
+	superAtivo = not superAtivo
+	local char = player.Character or player.CharacterAdded:Wait()
+	local humanoid = char:WaitForChild("Humanoid")
+
+	if superAtivo then
+		superBtn.Text = "Super ON"
+		humanoid.WalkSpeed = 60 -- velocidade
+		humanoid.JumpPower = 150 -- pulo
+	else
+		superBtn.Text = "Super OFF"
+		humanoid.WalkSpeed = 16 -- normal
+		humanoid.JumpPower = 50 -- normal
+	end
+end)
