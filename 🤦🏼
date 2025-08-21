@@ -1,0 +1,88 @@
+-- Painel LocalScript Lua para Roblox: "Roube um brainrot"
+-- Funções: Anti Hit Exploit & Super Pulo/Super Velocidade
+
+-- Criação do painel simples
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = player.PlayerGui
+ScreenGui.Name = "PainelBrainrot"
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 220, 0, 120)
+Frame.Position = UDim2.new(0, 20, 0, 20)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0,10)
+UICorner.Parent = Frame
+
+-- Botão Anti Hit Exploit
+local AntiHitBtn = Instance.new("TextButton")
+AntiHitBtn.Size = UDim2.new(1, -20, 0, 40)
+AntiHitBtn.Position = UDim2.new(0, 10, 0, 10)
+AntiHitBtn.Text = "Ativar Anti Hit Exploit"
+AntiHitBtn.BackgroundColor3 = Color3.fromRGB(60,180,75)
+AntiHitBtn.TextColor3 = Color3.fromRGB(255,255,255)
+AntiHitBtn.Parent = Frame
+
+-- Botão Super Pulo/Super Velocidade
+local SuperBtn = Instance.new("TextButton")
+SuperBtn.Size = UDim2.new(1, -20, 0, 40)
+SuperBtn.Position = UDim2.new(0, 10, 0, 60)
+SuperBtn.Text = "Ativar Super Pulo/Velocidade"
+SuperBtn.BackgroundColor3 = Color3.fromRGB(0,130,200)
+SuperBtn.TextColor3 = Color3.fromRGB(255,255,255)
+SuperBtn.Parent = Frame
+
+-- Função 1: Anti Hit Exploit (protege humanoid)
+local antiHitActive = true
+AntiHitBtn.MouseButton1Click:Connect(function()
+    if not antiHitActive then
+        antiHitActive = true
+        AntiHitBtn.Text = "Anti Hit Ativado!"
+        -- Protege o Humanoid de ser removido/resetado
+        character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.Name = "ProtectedHumanoid"
+            humanoid.HealthChanged:Connect(function(health)
+                if health < 5 then
+                    humanoid.Health = humanoid.MaxHealth -- Cura se tentarem te dar hit kill
+                end
+            end)
+        end
+        -- Previne remoção do Humanoid
+        character.ChildRemoved:Connect(function(child)
+            if child:IsA("Humanoid") then
+                local newHumanoid = Instance.new("Humanoid")
+                newHumanoid.Parent = character
+            end
+        end)
+    end
+end)
+
+-- Função 2: Super Pulo e Super Velocidade
+local superActive = true
+SuperBtn.MouseButton1Click:Connect(function()
+    character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    if not superActive then
+        superActive = true
+        SuperBtn.Text = "Super Ativado!"
+        humanoid.WalkSpeed = 100 -- Velocidade alta
+        humanoid.JumpPower = 150 -- Super pulo
+    else
+        superActive = true
+        SuperBtn.Text = "Ativar Super Pulo/Velocidade"
+        humanoid.WalkSpeed = 16 -- Valor padrão
+        humanoid.JumpPower = 50 -- Valor padrão
+    end
+end)
+
+-- Dica: Para remover o painel, basta deletar o ScreenGui chamado "PainelBrainrot"
