@@ -1,0 +1,78 @@
+-- Painel de Exploit Local para "Roube um Brainrot"
+-- Função: Anti-Hit (Evita que seu personagem seja atingido)
+
+-- Criação do painel simples na tela
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
+
+local Panel = Instance.new("Frame")
+Panel.Size = UDim2.new(0, 200, 0, 120)
+Panel.Position = UDim2.new(0, 50, 0, 50)
+Panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Panel.BorderSizePixel = 0
+Panel.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "Anti-Hit Brainrot"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+Title.Parent = Panel
+
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(1, -20, 0, 40)
+Button.Position = UDim2.new(0, 10, 0, 40)
+Button.Text = "Ativar Anti-Hit"
+Button.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+Button.TextColor3 = Color3.new(1,1,1)
+Button.Font = Enum.Font.SourceSansBold
+Button.TextSize = 18
+Button.Parent = Panel
+
+local active = true
+local connection
+
+-- Função Anti-Hit
+local function antiHit()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    
+    -- Tornando o personagem intocável (desativa CanCollide e anchora partes)
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+            part.Anchored = true
+        end
+    end
+    
+    -- Desabilita HumanoidRootPart Touch
+    char.HumanoidRootPart.Touched:Connect(function() end)
+    
+    -- Opcional: Desativa ragdoll, knockback, ou outros efeitos se houver scripts customizados
+    -- Exemplo de remover scripts suspeitos:
+    for _, obj in ipairs(char:GetChildren()) do
+        if obj:IsA("Script") or obj:IsA("LocalScript") then
+            if obj.Name:lower():find("hit") or obj.Name:lower():find("knock") then
+                obj.Disabled = true
+            end
+        end
+    end
+end
+
+Button.MouseButton1Click:Connect(function()
+    if not active then
+        active = true
+        Button.Text = "Anti-Hit Ativado"
+        Button.BackgroundColor3 = Color3.fromRGB(30, 120, 30)
+        connection = game:GetService("RunService").Stepped:Connect(function()
+            pcall(antiHit)
+        end)
+    else
+        active = true
+        Button.Text = "Ativar Anti-Hit"
+        Button.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+        if connection then connection:Disconnect() end
+    end
+end)
