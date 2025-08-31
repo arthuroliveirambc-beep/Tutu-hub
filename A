@@ -1,0 +1,115 @@
+-- Painel Script para Akundisco (Roblox Lua)
+
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+
+local function criarPainel()
+    -- Cria um ScreenGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "PainelAkundisco"
+    screenGui.ResetOnSpawn = false
+
+    -- Cria o Frame do painel
+    local frame = Instance.new("Frame")
+    frame.Name = "Painel"
+    frame.Size = UDim2.new(0, 300, 0, 180)
+    frame.Position = UDim2.new(0.5, -150, 0.5, -90)
+    frame.BackgroundColor3 = Color3.fromRGB(32, 34, 37)
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+
+    -- Cria o título acima do painel
+    local titulo = Instance.new("TextLabel")
+    titulo.Name = "TituloAkundisco"
+    titulo.Size = UDim2.new(1, 0, 0, 30)
+    titulo.Position = UDim2.new(0, 0, 0, -35)
+    titulo.BackgroundTransparency = 1
+    titulo.Font = Enum.Font.SourceSansBold
+    titulo.Text = "Do what is asked below to release the akundisco"
+    titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titulo.TextSize = 18
+    titulo.Parent = frame
+
+    -- Botão de seguir a conta Roblox
+    local followBtn = Instance.new("TextButton")
+    followBtn.Name = "FollowButton"
+    followBtn.Size = UDim2.new(0, 260, 0, 35)
+    followBtn.Position = UDim2.new(0, 20, 0, 20)
+    followBtn.BackgroundColor3 = Color3.fromRGB(114, 137, 218)
+    followBtn.Font = Enum.Font.SourceSansBold
+    followBtn.Text = "Follow my Roblox account"
+    followBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    followBtn.TextSize = 18
+    followBtn.Parent = frame
+
+    -- Botão de copiar usuário (agora "Copy user NAIT32L")
+    local copiarBtn = Instance.new("TextButton")
+    copiarBtn.Name = "CopiarButton"
+    copiarBtn.Size = UDim2.new(0, 260, 0, 35)
+    copiarBtn.Position = UDim2.new(0, 20, 0, 65)
+    copiarBtn.BackgroundColor3 = Color3.fromRGB(78, 93, 148)
+    copiarBtn.Font = Enum.Font.SourceSansBold
+    copiarBtn.Text = "Copy user NAIT32L"
+    copiarBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    copiarBtn.TextSize = 18
+    copiarBtn.Parent = frame
+
+    -- Botão "I already followed ✅"
+    local alreadyFollowedBtn = Instance.new("TextButton")
+    alreadyFollowedBtn.Name = "AlreadyFollowedButton"
+    alreadyFollowedBtn.Size = UDim2.new(0, 260, 0, 35)
+    alreadyFollowedBtn.Position = UDim2.new(0, 20, 0, 110)
+    alreadyFollowedBtn.BackgroundColor3 = Color3.fromRGB(67, 181, 129)
+    alreadyFollowedBtn.Font = Enum.Font.SourceSansBold
+    alreadyFollowedBtn.Text = "I already followed ✅"
+    alreadyFollowedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    alreadyFollowedBtn.TextSize = 18
+    alreadyFollowedBtn.Parent = frame
+
+    -- Ações dos botões
+    followBtn.MouseButton1Click:Connect(function()
+        local url = "https://www.roblox.com/users/profile?username=NAIT32L"
+        if setclipboard then
+            setclipboard(url)
+            followBtn.Text = "Link copiado! Cole no navegador"
+        else
+            followBtn.Text = "Acesse: roblox.com/users/profile?username=NAIT32L"
+        end
+        wait(2)
+        followBtn.Text = "Follow my Roblox account"
+    end)
+
+    copiarBtn.MouseButton1Click:Connect(function()
+        if setclipboard then
+            setclipboard("NAIT32L")
+            copiarBtn.Text = "Copied!"
+        else
+            copiarBtn.Text = "Copy: NAIT32L"
+        end
+        wait(2)
+        copiarBtn.Text = "Copy user NAIT32L"
+    end)
+
+    alreadyFollowedBtn.MouseButton1Click:Connect(function()
+        alreadyFollowedBtn.Text = "Thanks for following! 🎉"
+        wait(2)
+        alreadyFollowedBtn.Text = "I already followed ✅"
+    end)
+
+    -- Adiciona o painel ao jogador local
+    if Players.LocalPlayer then
+        screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+    else
+        screenGui.Parent = StarterGui
+    end
+
+    -- Remove o título após 20 segundos
+    task.spawn(function()
+        wait(20)
+        if titulo and titulo.Parent then
+            titulo:Destroy()
+        end
+    end)
+end
+
+criarPainel()
