@@ -1,0 +1,20 @@
+-- Coloque esse script dentro de um LocalScript no StarterGui (ex: dentro de um TextButton)
+
+local player = game.Players.LocalPlayer
+local button = script.Parent  -- botão no GUI
+local tpSpots = { 
+    workspace:WaitForChild("Base_arthur444a_6"), 
+    workspace:WaitForChild("Base_CARECAO155") 
+}
+
+-- Quando clicar no botão, teleporta
+button.MouseButton1Click:Connect(function()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    -- Escolhe a primeira base (pode trocar por lógica aleatória ou fixa)
+    local targetBase = tpSpots[1]  -- [1] é arthur444a_6, [2] é CARECAO155
+
+    humanoidRootPart.CFrame = targetBase.CFrame + Vector3.new(0, 5, 0) 
+    -- + Vector3.new(0,5,0) serve pra não nascer preso no chão
+end)
