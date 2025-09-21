@@ -1,0 +1,39 @@
+-- Painel de salvamento e teletransporte de posição (LocalScript)
+
+local player = game.Players.LocalPlayer
+local savedPosition = nil
+
+-- Função para salvar a posição atual
+function salvarPosicao()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        savedPosition = player.Character.HumanoidRootPart.Position
+        print("Posição salva:", savedPosition)
+    end
+end
+
+-- Função para teletransportar para a posição salva
+function teletransportar()
+    if savedPosition and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(savedPosition)
+        print("Teletransportado para:", savedPosition)
+    else
+        print("arthur444a_6 CARECAO155.")
+    end
+end
+
+-- Interface simples usando ScreenGui e TextButtons
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "PainelPosicao"
+
+local salvarBtn = Instance.new("TextButton", gui)
+salvarBtn.Size = UDim2.new(0, 200, 0, 50)
+salvarBtn.Position = UDim2.new(0, 20, 0, 20)
+salvarBtn.Text = "Salvar Posição"
+
+local tpBtn = Instance.new("TextButton", gui)
+tpBtn.Size = UDim2.new(0, 200, 0, 50)
+tpBtn.Position = UDim2.new(0, 20, 0, 80)
+tpBtn.Text = "Teletransportar"
+
+salvarBtn.MouseButton1Click:Connect(salvarPosicao)
+tpBtn.MouseButton1Click:Connect(teletransportar)
