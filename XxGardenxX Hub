@@ -1,0 +1,92 @@
+-- Painel de Script Local LUA para Roblox: Salvar Posição & Teleportar para Posição
+-- Este script cria um painel GUI com dois botões: "Salvar Posição" e "Teleportar para Posição"
+-- Salva a posição do jogador e teleporta instantaneamente para ela ao clicar no botão correspondente.
+
+-- Serviços necessários
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local savedPosition = nil
+
+-- Função para criar a interface gráfica
+local function criarPainel()
+    -- Criar ScreenGui
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "PainelTeleporte"
+    gui.Parent = player:WaitForChild("PlayerGui")
+
+    -- Frame principal
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 200, 0, 120)
+    frame.Position = UDim2.new(0.5, -100, 0.5, -60)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    frame.BorderSizePixel = 2
+    frame.Parent = gui
+
+    -- Botão Salvar Posição
+    local btnSalvar = Instance.new("TextButton")
+    btnSalvar.Size = UDim2.new(1, -20, 0, 40)
+    btnSalvar.Position = UDim2.new(0, 10, 0, 10)
+    btnSalvar.BackgroundColor3 = Color3.fromRGB(60, 180, 75)
+    btnSalvar.Text = "Salvar Posição"
+    btnSalvar.TextColor3 = Color3.new(1,1,1)
+    btnSalvar.Font = Enum.Font.SourceSansBold
+    btnSalvar.TextSize = 18
+    btnSalvar.Parent = frame
+
+    -- Botão Teletransportar
+    local btnTP = Instance.new("TextButton")
+    btnTP.Size = UDim2.new(1, -20, 0, 40)
+    btnTP.Position = UDim2.new(0, 10, 0, 60)
+    btnTP.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    btnTP.Text = "Teleportar para Posição"
+    btnTP.TextColor3 = Color3.new(1,1,1)
+    btnTP.Font = Enum.Font.SourceSansBold
+    btnTP.TextSize = 18
+    btnTP.Parent = frame
+
+    -- Função do botão Salvar Posição
+    btnSalvar.MouseButton1Click:Connect(function()
+        local char = player.Character or player.CharacterAdded:Wait()
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then
+            savedPosition = root.Position
+            btnSalvar.Text = "Posição Salva!"
+            wait(1)
+            btnSalvar.Text = "Salvar Posição"
+        end
+    end)
+
+    -- Função do botão Teletransportar
+    btnTP.MouseButton1Click:Connect(function()
+        local char = player.Character or player.CharacterAdded:Wait()
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root and savedPosition then
+            -- Desativa temporariamente colisões para garantir teleporte sem lag ou travar em paredes
+            local noclip = true
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+            root.CFrame = CFrame.new(savedPosition)
+            -- Espera um frame para garantir o teleporte
+            game:GetService("RunService").RenderStepped:Wait()
+            -- Reativa colisões
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+            btnTP.Text = "Teletransportado!"
+            wait(1)
+            btnTP.Text = "Teleportar para Posição"
+        else
+            btnTP.Text = "Posição não salva!"
+            wait(1)
+            btnTP.Text = "Teleportar para Posição"
+        end
+    end)
+end
+
+-- Executa a criação do painel
+criarPainel()
