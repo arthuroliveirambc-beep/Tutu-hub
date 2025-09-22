@@ -1,0 +1,61 @@
+-- LocalScript dentro de StarterGui
+
+-- Serviços
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+-- Variável para armazenar a posição
+local savedCFrame = nil
+
+-- Criar GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BackgroundTransparency = 0.2
+frame.Parent = screenGui
+
+-- Botão salvar posição
+local saveButton = Instance.new("TextButton")
+saveButton.Size = UDim2.new(1, -10, 0.4, -5)
+saveButton.Position = UDim2.new(0, 5, 0, 5)
+saveButton.Text = "Salvar Posição"
+saveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+saveButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+saveButton.Parent = frame
+
+-- Botão teleportar
+local tpButton = Instance.new("TextButton")
+tpButton.Size = UDim2.new(1, -10, 0.4, -5)
+tpButton.Position = UDim2.new(0, 5, 0.55, 0)
+tpButton.Text = "Teleportar"
+tpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+tpButton.Parent = frame
+
+-- Função salvar posição
+saveButton.MouseButton1Click:Connect(function()
+    if character and humanoidRootPart then
+        savedCFrame = humanoidRootPart.CFrame
+        saveButton.Text = "Posição Salva!"
+        task.wait(1)
+        saveButton.Text = "Salvar Posição"
+    end
+end)
+
+-- Função teleportar
+tpButton.MouseButton1Click:Connect(function()
+    if savedCFrame and character and humanoidRootPart then
+        -- Teleportar direto (atravessa paredes)
+        humanoidRootPart.CFrame = savedCFrame + Vector3.new(0, 3, 0)
+    else
+        tpButton.Text = "POSIÇÃO SALVA!"
+        task.wait(1)
+        tpButton.Text = "Teleportar"
+    end
+end)
