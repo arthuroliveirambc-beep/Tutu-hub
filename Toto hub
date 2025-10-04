@@ -1,0 +1,9 @@
+
+# OLD DUPLICATION SCRIPT (OUTDATED & INCONSISTENT
+```lua
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ChangeSetting = ReplicatedStorage.Remotes.ChangeSetting
+ChangeSetting:FireServer(
+    {
+        Value = true,
+        Setting = "Graphics\255"
