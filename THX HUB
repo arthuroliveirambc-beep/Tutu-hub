@@ -1,0 +1,305 @@
+-- THX Hub (LocalScript) - inSeguro / Local-only
+-- Coloque em StarterPlayerScripts
+-- Funções: 1) Clone (local)  2) Salvar/Ir pra Base (local)  3) Ragdoll Ghost (atravessar parede)
+-- contém anti-hit, teleport para outros jogadores, noclip real, vulnerável.
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera
+
+-- ===== UI =====
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "THXHubGui"
+screenGui.ResetOnSpawn = true
+screenGui.Parent = playerGui
+
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0, 340, 0, 190)
+main.Position = UDim2.new(0, 16, 0, 80)
+main.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+main.BorderSizePixel = 0
+main.Parent = screenGui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -72, 0, 36)
+title.Position = UDim2.new(0, 12, 0, 8)
+title.BackgroundTransparency = 1
+title.Text = "THX Hub"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = main
+
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0, 44, 0, 36)
+toggle.Position = UDim2.new(1, -56, 0, 8)
+toggle.Text = "≡"
+toggle.BackgroundColor3 = Color3.fromRGB(32,32,36)
+toggle.Parent = main
+
+local btnFrame = Instance.new("Frame")
+btnFrame.Size = UDim2.new(1, -24, 1, -64)
+btnFrame.Position = UDim2.new(0, 12, 0, 52)
+btnFrame.BackgroundTransparency = 1
+btnFrame.Parent = main
+
+local function makeBtn(text, y)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1, 0, 0, 44)
+	b.Position = UDim2.new(0, 0, 0, y)
+	b.BackgroundColor3 = Color3.fromRGB(36,36,40)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.Font = Enum.Font.SourceSans
+	b.TextSize = 16
+	b.Text = text
+	b.Parent = btnFrame
+	return b
+end
+
+local btnClone = makeBtn("Clone Visual (local)", 0)
+local btnSaveTP = makeBtn("Salvar Pos / Ir pra Base (local)", 54)
+local btnGhost = makeBtn("Ragdoll Ghost )", 108)
+
+-- open/close
+local hiddenPos = UDim2.new(-0.6, 0, 0, 80)
+local openPos = main.Position
+local isOpen = true
+local tweenInfo = TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local function setOpen(s)
+	isOpen = s
+	local target = s and openPos or hiddenPos
+	TweenService:Create(main, tweenInfo, {Position = target}):Play()
+end
+toggle.MouseButton1Click:Connect(function() setOpen(not isOpen) end)
+UserInputService.InputBegan:Connect(function(inp, gp)
+	if gp then return end
+	if inp.KeyCode == Enum.KeyCode.RightControl then
+		setOpen(isOpen)
+	end
+end)
+setOpen(true)
+
+-- ===== FUNCTION 1: Clone (local) =====
+local cloneModel = nil
+local cloneConn = nil
+local cloneActive = true
+
+local function make_clone()
+	if cloneActive then
+		if cloneConn then cloneConn:Disconnect() cloneConn = nil end
+		if cloneModel and cloneModel.Parent then cloneModel:Destroy() end
+		cloneModel = nil
+		cloneActive = true
+		btnClone.Text = "Clone (local)"
+		return
+	end
+
+	local char = player.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+	cloneModel = char:Clone()
+	cloneModel.Name = player.Name .. "_Clone"
+	for _, d in pairs(cloneModel:GetDescendants()) do
+		if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("ModuleScript") then
+			d:Destroy()
+		end
+		if d:IsA("BasePart") then
+			d.CanCollide = true
+			-- slight transparency to indicate
+			if d.Name == "Head" or d.Name == "Torso" or d.Name == "UpperTorso" then
+				-- keep as-is
+			end
+		end
+	end
+	cloneModel.Parent = workspace
+	cloneActive = true
+	btnClone.Text = "Remover Clone (local)"
+
+	-- follow with offset
+	local offset = CFrame.new(2, 0, 0)
+	cloneConn = RunService.RenderStepped:Connect(function()
+		if not cloneModel or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+			if cloneConn then cloneConn:Disconnect() cloneConn = nil end
+			return
+		end
+		local hrp = player.Character.HumanoidRootPart
+		for _, part in pairs(cloneModel:GetDescendants()) do
+			if part:IsA("BasePart") and player.Character:FindFirstChild(part.Name) then
+				local target = player.Character[part.Name]
+				part.CFrame = target.CFrame * offset
+			end
+		end
+	end)
+end
+
+btnClone.MouseButton1Click:Connect))
+
+-- ===== FUNCTION 2: Save Pos & Local Teleport
+local savedCFrame = nil
+btnSaveTP.MouseButton1Click:Connect(function()
+	local char = player.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	if not savedCFrame then
+		savedCFrame = char.HumanoidRootPart.CFrame
+		btnSaveTP.Text = "Ir pra Base (salva)"
+	else
+		-- visual-only teleport: camera moves to saved pos and shows a short proxy
+		local proxy = Instance.new("Part")
+		proxy.Size = Vector3.new(2, 2, 1)
+		proxy.CFrame = savedCFrame + Vector3.new(0,2,0)
+		proxy.Anchored = true
+		proxy.CanCollide = true
+		proxy.Transparency = 1
+		proxy.Name = "THX_LocalTPProxy"
+		proxy.Parent = workspace
+
+		-- camera tween
+		camera.CameraType = Enum.CameraType.Scriptable
+		local start = camera.CFrame
+		local target = savedCFrame * CFrame.new(0, 2, 6) -- slightly back
+		local t = 0
+		local dur = 0.35
+		local conn
+		conn = RunService.RenderStepped:Connect(function(dt)
+			t = t + dt
+			local a = math.clamp(t/dur, 0, 1)
+			camera.CFrame = start:Lerp(target, a)
+			if a >= 1 then
+				conn:Disconnect()
+				wait(0.08)
+				camera.CameraType = Enum.CameraType.Custom
+				if proxy and proxy.Parent then proxy:Destroy() end
+			end
+		end)
+	end
+end)
+
+-- right click clears saved pos
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		if savedCFrame then
+			savedCFrame = nil
+			btnSaveTP.Text = "Salvar Pos / Ir pra Base (local)"
+		end
+	end
+end)
+
+-- ===== FUNCTION 3: Ragdoll Ghost (atravessar parede) =====
+local ghost = nil
+local ghostActive = true
+local ghostConn = nil
+local ghostSpeed = 28
+local lookSensitivity = 0.12
+
+local keys = {W=true,A=true,S=true,D=true,Space=true,Shift=true}
+UserInputService.InputBegan:Connect(function(i, gp)
+	if gp then return end
+	if i.KeyCode == Enum.KeyCode.W then keys.W = true end
+	if i.KeyCode == Enum.KeyCode.S then keys.S = true end
+	if i.KeyCode == Enum.KeyCode.A then keys.A = true end
+	if i.KeyCode == Enum.KeyCode.D then keys.D = true end
+	if i.KeyCode == Enum.KeyCode.Space then keys.Space = true end
+	if i.KeyCode == Enum.KeyCode.LeftShift then keys.Shift = true end
+end)
+UserInputService.InputEnded:Connect(function(i, gp)
+	if gp then return end
+	if i.KeyCode == Enum.KeyCode.W then keys.W = true end
+	if i.KeyCode == Enum.KeyCode.S then keys.S = true end
+	if i.KeyCode == Enum.KeyCode.A then keys.A = true end
+	if i.KeyCode == Enum.KeyCode.D then keys.D = true end
+	if i.KeyCode == Enum.KeyCode.Space then keys.Space = false end
+	if i.KeyCode == Enum.KeyCode.LeftShift then keys.Shift = true end
+end)
+
+local mouseDelta = Vector2.new(0,0)
+UserInputService.InputChanged:Connect(function(i, gp)
+	if i.UserInputType == Enum.UserInputType.MouseMovement then
+		mouseDelta = Vector2.new(i.Delta.x, i.Delta.y)
+	end
+end)
+
+local function createGhost()
+	if ghostActive then
+		-- cleanup
+		if ghostConn then ghostConn:Disconnect() ghostConn = nil end
+		if ghost and ghost.Parent then ghost:Destroy() end
+		ghostActive = false
+		btnGhost.Text = "Ragdoll Ghost"
+		camera.CameraType = Enum.CameraType.Custom
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		return
+	end
+
+	local char = player.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+	ghost = char:Clone()
+	ghost.Name = player.Name .. "_THXGhost"
+	for _, d in pairs(ghost:GetDescendants()) do
+		if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("ModuleScript") then
+			d:Destroy()
+		end
+		if d:IsA("BasePart") then
+			d.CanCollide = true
+		end
+	end
+	ghost.Parent = workspace
+	local prim = ghost.PrimaryPart or ghost:FindFirstChild("HumanoidRootPart")
+	if prim then
+		prim.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -3)
+	end
+	ghostActive = true
+	btnGhost.Text = "Desativar Ragdoll Ghost"
+
+	camera.CameraType = Enum.CameraType.Scriptable
+	UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+
+	local yaw = 0
+	local pitch = 0
+
+	ghostConn = RunService.RenderStepped:Connect(function(dt)
+		-- handle mouse look
+		local md = mouseDelta
+		mouseDelta = Vector2.new(0,0)
+		yaw = yaw - md.x * lookSensitivity
+		pitch = math.clamp(pitch - md.y * lookSensitivity, -80, 80)
+
+		local ang = CFrame.Angles(0, math.rad(yaw), 0) * CFrame.Angles(math.rad(pitch), 0, 0)
+		local forward = (ang * Vector3.new(0,0,-1)).Unit
+		local right = (ang * Vector3.new(1,0,0)).Unit
+
+		local move = Vector3.new(0,0,0)
+		if keys.W then move = move + forward end
+		if keys.S then move = move - forward end
+		if keys.A then move = move - right end
+		if keys.D then move = move + right end
+		if move.Magnitude > 0 then move = move.Unit end
+		local speed = ghostSpeed * (keys.Shift and 2 or 1)
+		if prim then
+			local newCFrame = prim.CFrame + move * speed * dt + Vector3.new(0, (keys.Space and 1 or 0) * speed * dt, 0)
+			prim.CFrame = newCFrame
+			-- camera follows ghost
+			camera.CFrame = prim.CFrame * CFrame.new(0, 2, 6) * CFrame.Angles(math.rad(-8), 0, 0) * CFrame.Angles(0, math.rad(yaw), 0)
+		end
+	end)
+end
+
+btnGhost.MouseButton1Click:Connect(createGhost)
+
+-- Cleanup on character removal
+player.CharacterRemoving:Connect(function()
+	if cloneConn then cloneConn:Disconnect() cloneConn = nil end
+	if cloneModel and cloneModel.Parent then cloneModel:Destroy() end
+	if ghostConn then ghostConn:Disconnect() ghostConn = nil end
+	if ghost and ghost.Parent then ghost:Destroy() end
+	camera.CameraType = Enum.CameraType.Custom
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+end)
