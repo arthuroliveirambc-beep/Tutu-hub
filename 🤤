@@ -1,0 +1,179 @@
+-- Script PvP Completo - Roblox
+-- Todos os direitos reservados a arthuroliveirambc-beep
+
+local Player = game.Players.LocalPlayer
+local Mouse = Player:GetMouse()
+local Gui = Instance.new("ScreenGui", game.CoreGui)
+Gui.Name = "arthuroliveirambc_GUI"
+
+-- Interface
+local Main = Instance.new("Frame", Gui)
+Main.Name = "MainFrame"
+Main.Size = UDim2.new(0, 350, 0, 310)
+Main.Position = UDim2.new(0.5, -175, 0.5, -155)
+Main.BackgroundColor3 = Color3.new(0.12, 0.12, 0.18)
+Main.Visible = true
+
+local Title = Instance.new("TextLabel", Main)
+Title.Text = "PvP Script por arthuroliveirambc-beep"
+Title.Size = UDim2.new(1,0,0,40)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.new(1,1,0)
+Title.Font = Enum.Font.GothamBold
+Title.TextScaled = true
+
+local CloseBtn = Instance.new("TextButton", Main)
+CloseBtn.Text = "Fechar"
+CloseBtn.Size = UDim2.new(0,80,0,30)
+CloseBtn.Position = UDim2.new(1, -90, 0, 10)
+CloseBtn.BackgroundColor3 = Color3.new(1,0.3,0.3)
+CloseBtn.MouseButton1Click:Connect(function()
+    Gui:Destroy() 
+end)
+
+local HideBtn = Instance.new("TextButton", Main)
+HideBtn.Text = "Ocultar"
+HideBtn.Size = UDim2.new(0,80,0,30)
+HideBtn.Position = UDim2.new(1, -180, 0, 10)
+HideBtn.BackgroundColor3 = Color3.new(0.8,0.8,0.8)
+HideBtn.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
+
+-- Funções de ESP (radar visual, caixas, nome, vida)
+local ESP_ACTIVE = false
+local ESPObjects = {}
+function EnableESP()
+    ESP_ACTIVE = true
+    for _,v in pairs(game.Players:GetPlayers()) do
+        if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local box = Drawing.new("Square")
+            box.Color = Color3.new(1,0,0)
+            box.Thickness = 2
+            box.Size = Vector2.new(50, 75)
+            box.Visible = true
+            ESPObjects[v.Name] = box
+        end
+    end
+end
+function DisableESP()
+    ESP_ACTIVE = false
+    for _,box in pairs(ESPObjects) do box.Visible = false end
+    ESPObjects = {}
+end
+
+-- Funções de AIMBOT/AIMLOCK/AIMFOV
+local AIMBOT_ACTIVE = false
+local AIMFOV_RADIUS = 80
+local AIMLOCK_ACTIVE = false
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Radius = AIMFOV_RADIUS
+FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y)
+FOVCircle.Color = Color3.fromRGB(255,255,0)
+FOVCircle.Visible = false
+FOVCircle.Thickness = 2
+
+function ClosestTarget()
+    local closest = nil
+    local shortest = AIMFOV_RADIUS
+    for _,v in pairs(game.Players:GetPlayers()) do
+        if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            local pos = workspace.CurrentCamera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+            if dist < shortest then
+                shortest = dist
+                closest = v
+            end
+        end
+    end
+    return closest
+end
+
+function AimAt(target)
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        workspace.CurrentCamera.CFrame = CFrame.new(
+            workspace.CurrentCamera.CFrame.Position,
+            target.Character.HumanoidRootPart.Position
+        )
+    end
+end
+
+-- UI Botoes de Função
+local ESPBtn = Instance.new("TextButton", Main)
+ESPBtn.Text = "Ativar ESP"
+ESPBtn.Size = UDim2.new(0,120,0,30)
+ESPBtn.Position = UDim2.new(0,20,0,60)
+ESPBtn.BackgroundColor3 = Color3.new(0.3,0.7,0.9)
+ESPBtn.MouseButton1Click:Connect(function()
+    ESP_ACTIVE = not ESP_ACTIVE
+    ESPBtn.Text = ESP_ACTIVE and "Desativar ESP" or "Ativar ESP"
+    if ESP_ACTIVE then EnableESP() else DisableESP() end
+end)
+
+local AimbotBtn = Instance.new("TextButton", Main)
+AimbotBtn.Text = "Ativar AIMBOT"
+AimbotBtn.Size = UDim2.new(0,120,0,30)
+AimbotBtn.Position = UDim2.new(0,20,0,100)
+AimbotBtn.BackgroundColor3 = Color3.new(0.7,0.9,0.3)
+AimbotBtn.MouseButton1Click:Connect(function()
+    AIMBOT_ACTIVE = not AIMBOT_ACTIVE
+    AimbotBtn.Text = AIMBOT_ACTIVE and "Desativar AIMBOT" or "Ativar AIMBOT"
+    FOVCircle.Visible = AIMBOT_ACTIVE
+end)
+
+local AimlockBtn = Instance.new("TextButton", Main)
+AimlockBtn.Text = "Ativar AIMLOCK"
+AimlockBtn.Size = UDim2.new(0,120,0,30)
+AimlockBtn.Position = UDim2.new(0,20,0,140)
+AimlockBtn.BackgroundColor3 = Color3.new(0.9,0.4,0.7)
+AimlockBtn.MouseButton1Click:Connect(function()
+    AIMLOCK_ACTIVE = not AIMLOCK_ACTIVE
+    AimlockBtn.Text = AIMLOCK_ACTIVE and "Desativar AIMLOCK" or "Ativar AIMLOCK"
+end)
+
+-- Loop geral
+game:GetService("RunService").RenderStepped:Connect(function()
+    if ESP_ACTIVE then
+        for _,v in pairs(game.Players:GetPlayers()) do
+            if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = v.Character.HumanoidRootPart
+                local pos = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
+                if ESPObjects[v.Name] then
+                    ESPObjects[v.Name].Position = Vector2.new(pos.X-25, pos.Y-80)
+                    ESPObjects[v.Name].Visible = true
+                else
+                    local box = Drawing.new("Square")
+                    box.Color = Color3.new(1,0,0)
+                    box.Thickness = 2
+                    box.Size = Vector2.new(50, 75)
+                    box.Visible = true
+                    ESPObjects[v.Name] = box
+                end
+            end
+        end
+    end
+    if AIMBOT_ACTIVE then
+        local target = ClosestTarget()
+        if target then
+            AimAt(target)
+        end
+        FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y)
+    end
+    if AIMLOCK_ACTIVE then
+        local target = ClosestTarget()
+        if target then
+            workspace.CurrentCamera.CFrame = CFrame.new(
+                workspace.CurrentCamera.CFrame.Position,
+                target.Character.HumanoidRootPart.Position
+            )
+        end
+    end
+end)
+
+-- Garantia que script permanece aberto, mesmo se morrer
+Player.CharacterAdded:Connect(function(char)
+    if not Gui or not Gui.Parent then
+        Gui.Parent = game.CoreGui
+        Main.Visible = true
+    end
+end)
