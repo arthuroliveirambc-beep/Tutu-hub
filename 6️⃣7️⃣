@@ -1,0 +1,58 @@
+if Name == "Player" then
+    Tab:Label({Text = "Controles do Jogador"})
+
+    local savedPosition = nil
+    local saveFile = "ReGuiPosition.json"
+
+    -- Tenta carregar posição salva ao iniciar
+    if isfile and isfile(saveFile) then
+        local ok, data = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(readfile(saveFile))
+        end)
+        if ok and data and data.x then
+            savedPosition = Vector3.new(data.x, data.y, data.z)
+            print("[ReGui] Posição carregada:", savedPosition)
+        else
+            warn("[ReGui] posição salva encontrada.")
+        end
+    end
+
+    Tab:Button({
+        Text = "💾 Salvar Posição",
+        Callback = function()
+            if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                warn("Personagem encontrado!")
+                return
+            end
+            savedPosition = LocalPlayer.Character.HumanoidRootPart.Position
+
+            -- Salvar no arquivo
+            local data = {x = savedPosition.X, y = savedPosition.Y, z = savedPosition.Z}
+            pcall(function()
+                writefile(saveFile, game:GetService("HttpService"):JSONEncode(data))
+            end)
+
+            print("[ReGui] Posição salva em:", savedPosition)
+        end
+    })
+
+    Tab:Button({
+        Text = "🚀 Teleporta para Posição",
+        Callback = function()
+            if not savedPosition then
+                warn("Nenhuma posição salva ainda!")
+                return
+            end
+            if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                warn("Personagem não encontrado!")
+                return
+            end
+
+            local root = LocalPlayer.Character.HumanoidRootPart
+            root.CFrame = CFrame.new(savedPosition + Vector3.new(0, 3, 0))
+            print("[ReGui] Teleportado para posição salva:", savedPosition)
+        end
+    })
+
+    Tab:Label({Text = "Atalhos: K = Noclip, LeftShift = Sprint, Ctrl+P = Salvar preset"})
+end
