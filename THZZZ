@@ -1,0 +1,76 @@
+
+
+-- ROUBE UM BRAINROT – 3 FUNÇÕES
+-- 1) Salvar Posição 2) TP p/ Posição 3) Anti-Hit (invisível + móvel só com brainrot na mão)
+
+local player   = game.Players.LocalPlayer
+local runs     = game:GetService("RunService")
+local mouse    = game:GetService("UserInputService")
+local camera   = workspace.CurrentCamera
+
+local savedPos = nil
+local antiOn   = false
+local connMove = nil
+
+-- Interface
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local fr = Instance.new("Frame", gui)
+fr.Size = UDim2.new(0,200,0,150)
+fr.Position = UDim2.new(0.5,-100,0.5,-75)
+fr.BackgroundColor3 = Color3.new(0,0,0)
+fr.Active = true
+fr.Draggable = true
+
+local b1 = Instance.new("TextButton", fr) b1.Size = UDim2.new(0,180,0,40) b1.Position = UDim2.new(0,10,0,10)   b1.Text = "Salvar Posição" b1.BackgroundColor3 = Color3.new(0,1,0)
+local b2 = Instance.new("TextButton", fr) b2.Size = UDim2.new(0,180,0,40) b2.Position = UDim2.new(0,10,0,55)   b2.Text = "TP p/ Posição" b2.BackgroundColor3 = Color3.new(1,1,0)
+local b3 = Instance.new("TextButton", fr) b3.Size = UDim2.new(0,180,0,40) b3.Position = UDim2.new(10,10,0,100) b3.Text = "Anti-Hit"       b3.BackgroundColor3 = Color3.new(0,1,1)
+
+-- 1) Salvar Posição
+b1.MouseButton1Click:Connect(function()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        savedPos = player.Character.HumanoidRootPart.CFrame
+        b1.Text = "Pos Salva!"
+        wait(1)
+        b1.Text = "Salvar Posição"
+    end
+end)
+
+-- 2) TP p/ Posição
+b2.MouseButton1Click:Connect(function()
+    if savedPos and player.Character and player.Character:HumanoidRootPart then
+        player.Character:SetPrimaryPartCFrame(savedPos)
+    end
+end)
+
+-- 3) Anti-Hit (só funciona com brainrot na mão)
+local function temBrainrot()
+    return (player.Backpack:FindFirstChild("Brainrot") or player.Character:FindFirstChild("Brainrot")) ~= nil
+end
+
+local function setInvis(bool)
+    if not player.Character then return end
+    for _, v in pairs(player.Character:GetDescendants()) do
+        if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+            v.Transparency = bool and 1 or 0
+        end
+    end
+end
+
+b3.MouseButton1Click:Connect(function()
+    if not temBrainrot() then b3.Text = "Sem Brainrot!" wait(1) b3.Text = "Anti-Hit" return end
+    antiOn = not antiOn
+    if antiOn then
+        b3.Text = "Anti ON"
+        setInvis(true)
+        -- Mantém personagem ativo
+        connMove = runs.RenderStepped:Connect(function()
+            if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+                player.Character:FindFirstChildOfClass("Humanoid").PlatformStand = false
+            end
+        end)
+    else
+        b3.Text = "Anti OFF"
+        setInvis(false)
+        if connMove then connMove:Disconnect() connMove = nil end
+    end
+end)
