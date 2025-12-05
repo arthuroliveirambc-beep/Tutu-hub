@@ -1,0 +1,210 @@
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+-- Player
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "UtilityPanel"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local panel = Instance.new("Frame")
+panel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+panel.Size = UDim2.new(0, 300, 0, 130)
+panel.Position = UDim2.new(0.5, -150, 0.1, 0)
+panel.AnchorPoint = Vector2.new(0.5, 0)
+panel.Visible = false
+panel.Active = true
+panel.Draggable = true
+panel.Parent = screenGui
+
+local btnOpen = Instance.new("TextButton")
+btnOpen.Text = "Abrir Painel"
+btnOpen.Size = UDim2.new(0, 120, 0, 36)
+btnOpen.Position = UDim2.new(0.5, -60, 0, 160)
+btnOpen.AnchorPoint = Vector2.new(0.5, 0)
+btnOpen.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+btnOpen.TextColor3 = Color3.fromRGB(200, 200, 200)
+btnOpen.Parent = screenGui
+
+local lblTitle = Instance.new("TextLabel")
+lblTitle.Text = "Painel de Utilidades"
+lblTitle.Size = UDim2.new(1, 0, 0, 32)
+lblTitle.Position = UDim2.new(0, 0, 0, 0)
+lblTitle.BackgroundTransparency = 1
+lblTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+lblTitle.Font = Enum.Font.GothamBold
+lblTitle.TextSize = 22
+lblTitle.Parent = panel
+
+local btnAntiHit = Instance.new("TextButton")
+btnAntiHit.Text = "Anti-Hit [DESLIGADO]"
+btnAntiHit.Size = UDim2.new(0, 130, 0, 36)
+btnAntiHit.Position = UDim2.new(0, 20, 0, 40)
+btnAntiHit.BackgroundColor3 = Color3.fromRGB(105, 95, 155)
+btnAntiHit.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnAntiHit.Parent = panel
+
+local btnFPSKiller = Instance.new("TextButton")
+btnFPSKiller.Text = "FPS-Killer"
+btnFPSKiller.Size = UDim2.new(0, 130, 0, 36)
+btnFPSKiller.Position = UDim2.new(0, 150, 0, 40)
+btnFPSKiller.BackgroundColor3 = Color3.fromRGB(155, 95, 105)
+btnFPSKiller.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnFPSKiller.Parent = panel
+
+local btnFechar = Instance.new("TextButton")
+btnFechar.Text = "✕"
+btnFechar.Size = UDim2.new(0, 30, 0, 30)
+btnFechar.Position = UDim2.new(1, -32, 0, 2)
+btnFechar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+btnFechar.TextColor3 = Color3.fromRGB(255, 90, 90)
+btnFechar.Font = Enum.Font.GothamBold
+btnFechar.TextSize = 20
+btnFechar.ZIndex = 2
+btnFechar.Parent = panel
+
+-- Abrir/Fechar Painel
+btnOpen.MouseButton1Click:Connect(function()
+	panel.Visible = true
+	btnOpen.Visible = false
+end)
+
+btnFechar.MouseButton1Click:Connect(function()
+	panel.Visible = false
+	btnOpen.Visible = true
+end)
+
+-- Atalhos para abrir/fechar com Tab
+UIS.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode == Enum.KeyCode.Tab then
+		panel.Visible = not panel.Visible
+		btnOpen.Visible = not panel.Visible
+	end
+end)
+
+---------------------------
+-- ANTI-HIT IMPLEMENTAÇÃO
+---------------------------
+local enabledAntiHit = false
+local oldRootCFrame = root.CFrame
+
+local box = Instance.new("Part")
+box.Size = Vector3.new(4, 4, 4)
+box.Anchored = true
+box.CanCollide = false
+box.Transparency = 1
+box.Parent = workspace
+box.Name = "AntiHitBox"
+box.CanTouch = false
+box.CanQuery = false
+
+-- Esconde o brainrot
+local function toggleBrainrot(state)
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj.Name:lower():find("brainrot") then
+			obj.Transparency = state and 1 or 0
+			obj.CanCollide = not state
+			obj.CanTouch = not state
+			if obj:IsA("BasePart") then
+				obj.CanQuery = not state
+			end
+		end
+	end
+end
+
+btnAntiHit.MouseButton1Click:Connect(function()
+	enabledAntiHit = not enabledAntiHit
+	if enabledAntiHit then
+		btnAntiHit.Text = "Anti-Hit [LIGADO]"
+		oldRootCFrame = root.CFrame
+		toggleBrainrot(true)
+		box.CFrame = oldRootCFrame
+		char.Archivable = false
+		for _, v in ipairs(char:GetChildren()) do
+			if v:IsA("BasePart") then
+				v.Transparency = 1
+				v.CanCollide = false
+				v.CanTouch = false
+				v.CanQuery = false
+			end
+		end
+		RunService.Heartbeat:Wait()
+		root.CFrame = box.CFrame
+	else
+		btnAntiHit.Text = "Anti-Hit [DESLIGADO]"
+		toggleBrainrot(false)
+		root.CFrame = oldRootCFrame
+		for _, v in ipairs(char:GetChildren()) do
+			if v:IsA("BasePart") then
+				v.Transparency = 0
+				v.CanCollide = true
+				v.CanTouch = true
+				v.CanQuery = true
+			end
+		end
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if enabledAntiHit and box.Parent then
+		box.CFrame = root.CFrame
+	end
+end)
+
+---------------------------
+-- FPS-KILLER IMPLEMENTAÇÃO
+---------------------------
+btnFPSKiller.MouseButton1Click:Connect(function()
+	local backpack = player:FindFirstChildOfClass("Backpack")
+	local tools = {}
+	local auras = {}
+
+	-- Guarda tudo que está no inventário
+	for _, obj in ipairs(backpack:GetChildren()) do
+		if obj:IsA("Tool") then
+			table.insert(tools, obj:Clone())
+		elseif obj.Name:lower():find("aura") then
+			table.insert(auras, obj:Clone())
+		end
+	end
+
+	for i = 1, math.min(5, #tools + #auras) do
+		local clone = char:Clone()
+		clone.Parent = workspace
+		clone:SetPrimaryPartCFrame(char:GetPrimaryPartCFrame() * CFrame.new(math.random(-10, 10), 0, math.random(-10, 10)))
+
+		-- Remove scripts para evitar conflitos
+		for _, s in ipairs(clone:GetDescendants()) do
+			if s:IsA("Script") or s:IsA("LocalScript") then
+				s:Destroy()
+			end
+		end
+
+		-- Equipa clones
+		local cloneBackpack = clone:FindFirstChild("Backpack")
+		for _, t in ipairs(tools) do
+			t:Clone().Parent = cloneBackpack
+		end
+		for _, a in ipairs(auras) do
+			a:Clone().Parent = cloneBackpack
+		end
+
+		local cloneHum = clone:FindFirstChildOfClass("Humanoid")
+		if cloneHum then
+			for _, t in ipairs(cloneBackpack:GetChildren()) do
+				t.Parent = clone
+				cloneHum:EquipTool(t)
+			end
+		end
+	end
+end)
+
+-- Sugestão: você pode adicionar outros controles e personalizar o painel facilmente!
