@@ -1,0 +1,52 @@
+LocalScript dentro de: StarterPlayer > StarterPlayerScripts
+Ele cria uma GUI com 2 botões que podem ser movidos e usados para salvar/teleportar posição.
+]]
+-- Serviços
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+-- Variável para salvar a posição
+local savedPosition = nil
+-- Cria a ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SalvarTeleporteGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+-- Função para criar botões
+local function createButton(name, text, position)
+local button = Instance.new("TextButton")
+button.Name = name
+button.Text = text
+button.Size = UDim2.new(0,150,0,50)
+button.Position = position
+button.BackgroundColor3 = Color3.fromRGB(50,150,250)
+button.TextColor3 = Color3.fromRGB(255,255,255)
+button.Font = Enum.Font.SourceSansBold
+button.TextSize = 20
+button.Draggable = true -- 🔥 Permite mover o botão!
+button.Active = true
+button.Parent = screenGui
+return button
+end
+-- Botões
+local salvarBtn = createButton("SalvarBtn","💾 Salvar Posição",UDim2.new(0,50,0,100))
+local teleportBtn = createButton("TeleportBtn","⚡ Teleportar",UDim2.new(0,50,0,160))
+-- Função salvar posição
+salvarBtn.MouseButton1Click:Connect(function()
+if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+savedPosition = player.Character.HumanoidRootPart.CFrame
+salvarBtn.Text = "✅ Posição Salva!"
+task.wait(1.5)
+salvarBtn.Text = "💾 Salvar Posição"
+end
+end)
+-- Função teleportar
+teleportBtn.MouseButton1Click:Connect(function()
+if savedPosition and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+player.Character.HumanoidRootPart.CFrame = savedPosition
+else
+teleportBtn.Text = "⚠️Nenhuma posição salva!"
+task.wait(1.5)
+teleportBtn.Text = "⚡ Teleportar"
+end
+end)
