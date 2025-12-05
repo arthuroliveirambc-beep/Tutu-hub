@@ -1,0 +1,225 @@
+--[[
+Script Local Roblox: Painel com funções (Save Position, TP Steal, Fly, Noclip)
+Fechar/Abrir painel ao clicar no hotspot, salvar e teletransportar posição, fly, noclip.
+Autor: @copilot
+--]]
+
+-- Serviços necessários
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRoot = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+---- GUI Construction
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PainelScript"
+screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 280, 0, 210)
+mainFrame.Position = UDim2.new(0.5, -140, 0.5, -105)
+mainFrame.BackgroundColor3 = Color3.fromRGB(34, 34, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = true
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+-- Fechar (X) botão
+local closeBtn = Instance.new("TextButton")
+closeBtn.Text = "✕"
+closeBtn.Size = UDim2.new(0, 36, 0, 36)
+closeBtn.Position = UDim2.new(1, -38, 0, 2)
+closeBtn.TextSize = 26
+closeBtn.BackgroundColor3 = Color3.fromRGB(140, 40, 34)
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.Parent = mainFrame
+
+-- "Hotspot" botão para reabrir o painel
+local openBtn = Instance.new("TextButton")
+openBtn.Text = "Abrir Painel"
+openBtn.Size = UDim2.new(0, 120, 0, 36)
+openBtn.Position = UDim2.new(0, 4, 0, 4)
+openBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 80)
+openBtn.TextColor3 = Color3.new(1,1,1)
+openBtn.TextScaled = true
+openBtn.Visible = false
+openBtn.Parent = screenGui
+
+-------- Funções posicionais --------
+local posSalva = nil
+
+-- Botão: Salvar Posição
+local btnSavePos = Instance.new("TextButton")
+btnSavePos.Text = "Salvar Posição"
+btnSavePos.Size = UDim2.new(1, -32, 0, 36)
+btnSavePos.Position = UDim2.new(0, 16, 0, 46)
+btnSavePos.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+btnSavePos.TextColor3 = Color3.fromRGB(255,255,255)
+btnSavePos.TextScaled = true
+btnSavePos.Parent = mainFrame
+
+btnSavePos.MouseButton1Click:Connect(function()
+	character = player.Character or player.CharacterAdded:Wait()
+	humanoidRoot = character:WaitForChild("HumanoidRootPart")
+	posSalva = humanoidRoot.Position
+	btnSavePos.Text = "Posição Salva!"
+	wait(1)
+	btnSavePos.Text = "Salvar Posição"
+end)
+
+-- Botão: TP Steal (Tp para posição salva)
+local btnTpSteal = Instance.new("TextButton")
+btnTpSteal.Text = "TP Steal"
+btnTpSteal.Size = UDim2.new(1, -32, 0, 36)
+btnTpSteal.Position = UDim2.new(0, 16, 0, 88)
+btnTpSteal.BackgroundColor3 = Color3.fromRGB(220, 180, 60)
+btnTpSteal.TextColor3 = Color3.fromRGB(40,40,40)
+btnTpSteal.TextScaled = true
+btnTpSteal.Parent = mainFrame
+
+btnTpSteal.MouseButton1Click:Connect(function()
+	if posSalva then
+		character = player.Character or player.CharacterAdded:Wait()
+		humanoidRoot = character:WaitForChild("HumanoidRootPart")
+		humanoidRoot.CFrame = CFrame.new(posSalva)
+	end
+end)
+
+------------ FLY ------------
+local flyActive = false
+local flySpeed = 60
+local flyConn
+
+local btnFly = Instance.new("TextButton")
+btnFly.Text = "Fly [OFF]"
+btnFly.Size = UDim2.new(1, -32, 0, 36)
+btnFly.Position = UDim2.new(0, 16, 0, 130)
+btnFly.BackgroundColor3 = Color3.fromRGB(90,190,220)
+btnFly.TextColor3 = Color3.new(0,0,0)
+btnFly.TextScaled = true
+btnFly.Parent = mainFrame
+
+local curVel = Vector3.new()
+
+btnFly.MouseButton1Click:Connect(function()
+	flyActive = not flyActive
+	btnFly.Text = flyActive and "Fly [ON]" or "Fly [OFF]"
+
+	if flyActive then
+		local bp = Instance.new("BodyPosition")
+		bp.Name = "FlyBP"
+		bp.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		bp.Position = humanoidRoot.Position
+		bp.Parent = humanoidRoot
+
+		local bg = Instance.new("BodyGyro")
+		bg.Name = "FlyBG"
+		bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+		bg.CFrame = humanoidRoot.CFrame
+		bg.Parent = humanoidRoot
+
+		flyConn = RunService.RenderStepped:Connect(function()
+			character = player.Character or player.CharacterAdded:Wait()
+			humanoidRoot = character:WaitForChild("HumanoidRootPart")
+
+			local control = Vector3.new()
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+				control = control + (workspace.CurrentCamera.CFrame.LookVector)
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+				control = control - (workspace.CurrentCamera.CFrame.LookVector)
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+				control = control - (workspace.CurrentCamera.CFrame.RightVector)
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+				control = control + (workspace.CurrentCamera.CFrame.RightVector)
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+				control = control + Vector3.new(0,1,0)
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+				control = control - Vector3.new(0,1,0)
+			end
+
+			if control.Magnitude > 0 then
+				control = control.Unit * flySpeed
+			end
+			bp.Position = humanoidRoot.Position + control / 60
+			bg.CFrame = workspace.CurrentCamera.CFrame
+			humanoid.PlatformStand = true
+		end)
+	else
+		if humanoidRoot:FindFirstChild("FlyBP") then
+			humanoidRoot.FlyBP:Destroy()
+		end
+		if humanoidRoot:FindFirstChild("FlyBG") then
+			humanoidRoot.FlyBG:Destroy()
+		end
+		if flyConn then flyConn:Disconnect() end
+		humanoid.PlatformStand = false
+	end
+end)
+
+------------ NOCLIP ------------
+local noclipActive = false
+local noclipConn
+
+local btnNoclip = Instance.new("TextButton")
+btnNoclip.Text = "Noclip [OFF]"
+btnNoclip.Size = UDim2.new(1, -32, 0, 36)
+btnNoclip.Position = UDim2.new(0, 16, 0, 172)
+btnNoclip.BackgroundColor3 = Color3.fromRGB(120,40,180)
+btnNoclip.TextColor3 = Color3.fromRGB(255,255,255)
+btnNoclip.TextScaled = true
+btnNoclip.Parent = mainFrame
+
+btnNoclip.MouseButton1Click:Connect(function()
+	noclipActive = not noclipActive
+	btnNoclip.Text = noclipActive and "Noclip [ON]" or "Noclip [OFF]"
+
+	if noclipActive then
+		noclipConn = RunService.Stepped:Connect(function()
+			character = player.Character or player.CharacterAdded:Wait()
+			for _, part in ipairs(character:GetDescendants()) do
+				if part:IsA("BasePart") and part.CanCollide == true then
+					part.CanCollide = false
+				end
+			end
+		end)
+	else
+		if noclipConn then noclipConn:Disconnect() end
+		character = player.Character or player.CharacterAdded:Wait()
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = true
+			end
+		end
+	end
+end)
+
+------------ Fechar e Reabrir Painel --------------
+-- Fechar painel
+closeBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = false
+	openBtn.Visible = true
+end)
+
+-- Reabrir
+openBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = true
+	openBtn.Visible = false
+end)
+
+-- Opcional: Abrir painel apertando P
+UserInputService.InputBegan:Connect(function(input, processed)
+	if not processed and input.KeyCode == Enum.KeyCode.P then
+		mainFrame.Visible = not mainFrame.Visible
+		openBtn.Visible = not mainFrame.Visible
+	end
+end)
