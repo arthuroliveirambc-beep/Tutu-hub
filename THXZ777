@@ -1,0 +1,70 @@
+-- THZ HUB
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local savedPosition = nil
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "THZ_HUB"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 120)
+frame.Position = UDim2.new(0.5, -100, 0.5, -60)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = ScreenGui
+
+local saveBtn = Instance.new("TextButton")
+saveBtn.Size = UDim2.new(0, 180, 0, 40)
+saveBtn.Position = UDim2.new(0, 10, 0, 10)
+saveBtn.Text = "Salvar Posição"
+saveBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+saveBtn.TextColor3 = Color3.new(1, 1, 1)
+saveBtn.Font = Enum.Font.SourceSansBold
+saveBtn.TextSize = 18
+saveBtn.Parent = frame
+
+local tpBtn = Instance.new("TextButton")
+tpBtn.Size = UDim2.new(0, 180, 0, 40) -- <-- Fixed syntax here
+tpBtn.Position = UDim2.new(0, 10, 0, 60)
+tpBtn.Text = "Teleportar"
+tpBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+tpBtn.TextColor3 = Color3.new(1, 1, 1)
+tpBtn.Font = Enum.Font.SourceSansBold
+tpBtn.TextSize = 18
+tpBtn.Parent = frame
+
+local notify = Instance.new("TextLabel")
+notify.Size = UDim2.new(0, 200, 0, 30)
+notify.Position = UDim2.new(0.5, -100, 0, 50)
+notify.BackgroundTransparency = 1
+notify.Text = ""
+notify.TextColor3 = Color3.new(1, 1, 1)
+notify.Font = Enum.Font.SourceSansBold
+notify.TextSize = 20
+notify.Parent = ScreenGui
+
+local function showNotification(text)
+    notify.Text = text
+    wait(2)
+    notify.Text = ""
+end
+
+saveBtn.MouseButton1Click:Connect(function()
+    savedPosition = root.CFrame
+    showNotification("Posição salva!")
+end)
+
+tpBtn.MouseButton1Click:Connect(function()
+    if savedPosition then
+        root.CFrame = savedPosition
+        showNotification("Teleportado!")
+    else
+        showNotification("Nenhuma posição salva!")
+    end
+end)
