@@ -1,0 +1,130 @@
+
+
+-- LocalScript para Roblox
+-- Salvar em StarterPlayerScripts ou StarterGui
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "THZINHUB"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Visible = true
+mainFrame.Parent = gui
+
+local topbar = Instance.new("Frame")
+topbar.Size = UDim2.new(1, 0, 0, 30)
+topbar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+topbar.BorderSizePixel = 0
+topbar.Parent = mainFrame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 1, 0)
+title.BackgroundTransparency = 1
+title.Text = "THZIN HUB"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.Parent = topbar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -30, 0, 0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 18
+closeBtn.Parent = topbar
+
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1, 0, 1, -30)
+content.Position = UDim2.new(0, 0, 0, 30)
+content.BackgroundTransparency = 1
+content.Parent = mainFrame
+
+local saveBtn = Instance.new("TextButton")
+saveBtn.Size = UDim2.new(0, 120, 0, 40)
+saveBtn.Position = UDim2.new(0.5, -60, 0.3, 0)
+saveBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+saveBtn.BorderSizePixel = 0
+saveBtn.Text = "Salvar Posição"
+saveBtn.TextColor3 = Color3.new(1,1,1)
+saveBtn.Font = Enum.Font.SourceSans
+saveBtn.TextSize = 18
+saveBtn.Parent = content
+
+local tpBtn = Instance.new("TextButton")
+tpBtn.Size = UDim2.new(0, 120, 0, 40)
+tpBtn.Position = UDim2.new(0.5, -60, 0.5, 0)
+tpBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+tpBtn.BorderSizePixel = 0
+tpBtn.Text = "TP Steal"
+tpBtn.TextColor3 = Color3.new(1,1,1)
+tpBtn.Font = Enum.Font.SourceSans
+tpBtn.TextSize = 18
+tpBtn.Parent = content
+
+local circleBtn = Instance.new("TextButton")
+circleBtn.Size = UDim2.new(0, 50, 0, 50)
+circleBtn.Position = UDim2.new(1, -60, 1, -60)
+circleBtn.AnchorPoint = Vector2.new(1, 1)
+circleBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+circleBtn.BorderSizePixel = 0
+circleBtn.Text = "THZ"
+circleBtn.TextColor3 = Color3.new(1,1,1)
+circleBtn.Font = Enum.Font.SourceSansBold
+circleBtn.TextSize = 16
+circleBtn.Visible = false
+circleBtn.Parent = gui
+
+local savedPos = nil
+
+function notifyGreen(btn, text)
+	btn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+	btn.Text = text
+	wait(1.5)
+	btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+	btn.Text = (btn == saveBtn) and "Salvar Posição" or "TP Steal"
+end
+
+closeBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = false
+	circleBtn.Visible = true
+end)
+
+circleBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = true
+	circleBtn.Visible = false
+end)
+
+saveBtn.MouseButton1Click:Connect(function()
+	local char = player.Character or player.CharacterAdded:Wait()
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if root then
+		savedPos = root.CFrame
+		notifyGreen(saveBtn, "Posição salva")
+	end
+end)
+
+tpBtn.MouseButton1Click:Connect(function()
+	if savedPos then
+		local char = player.Character or player.CharacterAdded:Wait()
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if root then
+			root.CFrame = savedPos
+			notifyGreen(tpBtn, "TP realizado")
+		end
+	end
+end)
