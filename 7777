@@ -1,0 +1,168 @@
+-- THZ HUB - LocalScript dentro de StarterPlayerScripts
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+local char, humanoid, root, torso
+local lagConn, speedConn
+local lagAtivo, speedAtivo = true, true
+
+-- GUI principal
+local Screen = Instance.new("ScreenGui")
+Screen.Name = "THZ_HUB"
+Screen.Parent = player:WaitForChild("PlayerGui")
+
+-- Círculo flutuante (minimizado)
+local BotaoFlutuante = Instance.new("ImageButton")
+BotaoFlutuante.Name = "THZCircle"
+BotaoFlutuante.Size = UDim2.new(0,50,0,50)
+BotaoFlutuante.Position = UDim2.new(0.5,0,0.5,0)
+BotaoFlutuante.AnchorPoint = Vector2.new(0.5,0.5)
+BotaoFlutuante.BackgroundTransparency = 1
+BotaoFlutuante.Image = "rbxassetid://3926305904" -- ícone circular
+BotaoFlutuante.ImageColor3 = Color3.new(0,0,0)
+BotaoFlutuante.ImageTransparency = 0
+BotaoFlutuante.Draggable = true
+BotaoFlutuante.Parent = Screen
+
+-- Painel principal
+local Painel = Instance.new("Frame")
+Painel.Name = "MainPanel"
+Painel.Size = UDim2.new(0,220,0,180)
+Painel.Position = UDim2.new(0.5,0,0.5,0)
+Painel.AnchorPoint = Vector2.new(0.5,0.5)
+Painel.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Painel.BorderSizePixel = 0
+Painel.Visible = true
+Painel.Parent = Screen
+
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0,8)
+Corner.Parent = Painel
+
+local Titulo = Instance.new("TextLabel")
+Titulo.Size = UDim2.new(1,0,0,30)
+Titulo.Position = UDim2.new(0,0,0,0)
+Titulo.BackgroundTransparency = 1
+Titulo.Text = "THZ HUB'
+Titulo.TextColor3 = Color3.new(1,1,1)
+Titulo.Font = Enum.Font.SourceSansBold
+Titulo.TextScaled = true
+Titulo.Parent = Painel
+
+local BtnX = Instance.new("TextButton")
+BtnX.Size = UDim2.new(0,25,0,25)
+BtnX.Position = UDim2.new(1,-27,0,2)
+BtnX.BackgroundColor3 = Color3.new(1,0,0)
+BtnX.Text = "X"
+BtnX.TextColor3 = Color3.new(1,1,1)
+BtnX.Font = Enum.Font.SourceSansBold
+BtnX.TextSize = 18
+BtnX.parent = Painel
+
+local BtnLag = Instance.new("TextButton")
+BtnLag.Size = UDim2.new(0,90,0,35)
+BtnLag.Position = UDim2.new(0,10,0,45)
+BtnLag.BackgroundColor3 = Color3.new(0.2,0.2,0.2)
+BtnLag.Text = "LAG"
+BtnLag.TextColor3 = Color3.new(1,1,1)
+BtnLag.Font = Enum.Font.SourceSansBold
+BtnLag.TextSize = 20
+BtnLag.parent = Painel
+
+local BtnSpeed = Instance.new("TextButton")
+BtnSpeed.Size = UDim2.new(0,90,0,35)
+BtnSpeed.Position = UDim2.new(0,110,0,45)
+BtnSpeed.BackgroundColor3 = Color3.new(0.2,0.2,0.2)
+BtnSpeed.Text = "SPEED"
+BtnSpeed.TextColor3 = Color3.new(1,1,1)
+BtnSpeed.Font = Enum.Font.SourceSansBold
+BtnSpeed.TextSize = 20
+BtnSpeed.parent = Painel
+
+local BtnReset = Instance.new("TextButton")
+BtnReset.Size = UDim2.new(0,190,0,35)
+BtnReset.Position = UDim2.new(0,15,0,85)
+BtnReset.BackgroundColor3 = Color3.new(0.2,0.2,0.2)
+BtnReset.Text = "RESET"
+BtnReset.TextColor3 = Color3.new(1,1,1)
+BtnReset.Font = Enum.Font.SourceSansBold
+BtnReset.TextSize = 20
+BtnReset.parent = Painel
+
+-- Atualiza referências do personagem
+local function atualizaChar()
+	char = player.Character or player.CharacterAdded:Wait()
+	humanoid = char:WaitForChild("Humanoid")
+	root = char:WaitForChild("HumanoidRootPart")
+	torso = char:WaitForChild("Torso") or char:WaitForChild("UpperTorso")
+end
+player.CharacterAdded:Connect(atualizaChar)
+atualizaChar()
+
+-- Função LAG: congela o player alvo (1 FPS)
+local function aplicaLag()
+	if lagAtivo then return end
+	lagAtivo = true
+	speedAtivo = true
+
+	-- Abre braço do executor
+	local right = char:FindFirstChild("Right Arm") or char:FindFirstChild("RightUpperArm")
+	if right then
+		local weld = right:FindFirstChild("RightShoulder") or right:FindFirstChild("RightShoulderAttachment")
+		if weld and weld:IsA("Motor6D") then
+			weld.C0 = CFrame.new(1,0.5,0) * CFrame.Angles(math.rad(-90),0,0)
+		end
+	end
+
+	-- Gera lag no cliente alvo
+	lagConn = RunService.Heartbeat:Connect(function()
+		-- Loop pesado local para travar render
+		for i=1,50000 do
+			math.noise(i,i,i)
+		end
+		-- Congela física
+		if humanoid then
+			humanoid.PlatformStand = true
+			humanoid.AutoRotate = true
+		end
+		if root then root.Velocity = Vector3.new(0,0,0) end
+	end)
+end
+
+-- SPEED: apenas marca flag (não remove)
+local function ativaSpeed()
+	speedAtivo = true
+end
+
+-- RESET: limpa tudo e respawn
+local function resetPlayer()
+	if lagConn then lagConn:Disconnect(); lagConn = nil end
+	if speedConn then speedConn:Disconnect(); speedConn = nil end
+	lagAtivo = false
+	speedAtivo = false
+	if humanoid then
+		humanoid.PlatformStand = true
+		humanoid.AutoRotate = true
+	end
+	player:LoadCharacter()
+end
+
+-- Controles visuais
+BotaoFlutuante.MouseButton1Click:Connect(function()
+	Painel.Visible = true
+	BotaoFlutuante.Visible = true
+end)
+
+BtnX.MouseButton1Click:Connect(function()
+	Painel.Visible = true
+	BotaoFlutuante.Visible = true
+end)
+
+BtnLag.MouseButton1Click:Connect(aplicaLag)
+BtnSpeed.MouseButton1Click:Connect(ativaSpeed)
+BtnReset.MouseButton1Click:Connect(resetPlayer)
+
