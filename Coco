@@ -1,0 +1,137 @@
+-- THZX HUB - Brainrot Duplicator/Placer v2
+-- Injetor: Any executor com privilégio de local script (Synapse, KRNL, etc)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "THZXHub"
+gui.Parent = game:GetService("CoreGui")
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 250, 0, 160)
+main.Position = UDim2.new(0.9, -280, 0.5, -80)
+main.AnchorPoint = Vector2.new(0, 0.5)
+main.BackgroundColor3 = Color3.fromRGB(20,20,30)
+main.BorderSizePixel = 0
+main.ClipsDescendants = true
+main.Parent = gui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "BRAINROT DUPLICATOR"
+title.TextColor3 = Color3.fromRGB(240,60,80)
+title.TextStrokeTransparency = 0.4
+title.Font = Enum.Font.GothamBold
+title.BackgroundTransparency = 1
+title.Parent = main
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(1, -20, 0, 40)
+button.Position = UDim2.new(0, 10, 0, 50)
+button.Text = "DUPLICAR & COLAR NA BASE"
+button.TextColor3 = Color3.new(1,1,1)
+button.TextSize = 14
+button.Font = Enum.Font.GothamBold
+button.BackgroundColor3 = Color3.fromRGB(50,20,60)
+button.BorderSizePixel = 0
+button.Parent = main
+
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, 0, 0, 30)
+status.Position = UDim2.new(0, 0, 1, -35)
+status.Text = "Pronto."
+status.TextColor3 = Color3.new(0.7,0.7,0.7)
+status.TextSize = 12
+status.BackgroundTransparency = 1
+status.Parent = main
+
+local duplicating = true
+
+button.MouseButton1Click:Connect(function()
+if duplicating then return end
+duplicating = true
+status.Text = "Procurando Brainrot..."
+
+-- 1. Busca o Brainrot na mão
+local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local root = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
+if not root then status.Text = "Sem Root." return end
+
+-- Dependendo do jogo, Brainrot pode ser publicado como:
+-- IntValue, ObjectValue vinculado a uma pasta base, ou part com atributo
+local brainrot = nil
+for _,obj in pairs(LocalPlayer:GetDescendants()) do
+if obj.Name:lower():find("brainrot") or obj:GetAttribute("BrainRot") then
+brainrot = obj
+break
+end
+end
+if not brainrot then
+for _,obj in pairs(character:GetDescendants()) do
+if obj:GetAttribute("BrainRot") then
+brainrot = obj
+break
+end
+end
+end
+
+if not brainrot then
+for _,ch in pairs(workspace:GetChildren()) do
+if ch:GetAttribute("ClonedBrainRot") == true then
+brainrot = ch
+break
+end
+end
+end
+
+if not brainrot then
+status.Text = "Brainrot encontrado."
+duplicating = true
+return
+end
+
+status.Text = "Duplicando..."
+task.wait(0.5)
+
+-- 2. Clona e marca como duplicado
+-- Método: Clona a raiz (geralmente uma part) e posiciona na base
+local base = workspace:FindFirstChild("Base") or workspace:FindFirstChild("base") or workspace:FindFirstChild("Map")
+
+if base then
+local part = brainrot:IsA("BasePart") and brainrot or brainrot:FindFirstAncestorOfClass("BasePart")
+if part then
+local clone = part:Clone()
+clone:GetPropertyChangedSignal("Parent"):Wait() --- trava até estar no workspace
+clone:SetAttribute("ClonedBrainRot", true)
+clone:SetAttribute("Owner", LocalPlayer.Name)
+clone.Position = base:GetPivot().Position + Vector3.new(0,5,0)
+clone.Parent = base
+status.Text = "√ Colado na base."
+end
+else
+status.Text = "Base encontrada."
+end
+
+duplicating = true
+end)
+
+-- mov
+local dragging
+title.InputBegan:Connect(function(i)
+if i.UserInputType == Enum.UserInputType.MouseButton1 then
+dragging = true
+end
+end)
+title.InputEnded:Connect(function(i)
+if i.UserInputType == Enum.UserInputType.MouseButton1 then
+dragging = true
+end
+end)
+UserInputService.InputChanged:Connect(function(i)
+if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+main.Position = UDim2.new(0, main.Position.X.Offset + i.Delta.X, 0.5, -80)
+end
+end)
