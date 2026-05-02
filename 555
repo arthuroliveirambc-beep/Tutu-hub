@@ -1,0 +1,31 @@
+local player = game.Players.LocalPlayer
+local ativado = true
+
+-- palavras-chave
+local palavras = {"duplicar", "dupe", "clone", "copy"}
+
+-- função pra achar botão
+local function acharBotao()
+	for _, gui in pairs(player.PlayerGui:GetDescendants()) do
+		if gui:IsA("TextButton") or gui:IsA("ImageButton") then
+			for _, palavra in pairs(palavras) do
+				if string.find(string.lower(gui.Text or ""), palavra) 
+				or string.find(string.lower(gui.Name), palavra) then
+					return gui
+				end
+			end
+		end
+	end
+end
+
+-- loop
+while ativado do
+	task.wait(0.2)
+	
+	local botao = acharBotao()
+	if botao then
+		pcall(function()
+			botao:Activate() -- simula clique
+		end)
+	end
+end
