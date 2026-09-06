@@ -1,0 +1,209 @@
+local Rayfield = loadstring(game:HttpGet('https://github.com/shlexware/RayfieldLibrary/releases/download/latest/library.lua'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Careca Hub | Roube um Ovo",
+   LoadingTitle = "Carregando Careca Hub...",
+   LoadingContent = "Injetando no sistema do jogo...",
+   LoadingCores = 4,
+   Theme = "Dark"
+})
+
+-- Variáveis de Estado
+local SelectedPet = nil
+local LoopActive = false
+local InstantStealActive = false
+local SafeZonePos = Vector3.new(0, 50, 0) -- Posição padrão da zona segura
+
+-- Tabela de Raridades (Peso para o ESP/Loop)
+local Rarities = {
+    ["Divino"] = 8, ["Eterno"] = 7, ["Secreto"] = 6, ["Mítico"] = 5, 
+    ["Lendário"] = 4, ["Épico"] = 3, ["Raro"] = 2, ["Incomum"] = 1, ["Comum"] = 0
+}
+
+-- Lista de Ilhas
+local Islands = {
+    "Forest", "Lake", "Desert", "Jungle", "Snow", "Volcano", 
+    "Abyss Ocean", "Prehistoric", "Cosmic", "Cherry Blossom", "Titan Temple"
+}
+
+-- Função para encontrar o melhor Pet disponível no servidor
+local function GetBestPet()
+    local bestPet = nil
+    local maxWeight = -1
+    
+    -- Procura em todos os personagens no Workspace
+    for _, v in pairs(game.Workspace:GetDescendants()) do
+        if v:FindFirstChild("Rarity") and v:FindFirstChild("Value") then
+            local weight = Rarities[v.Rarity.Value] or 0
+            if weight > maxWeight then
+                maxWeight = weight
+                bestPet = v
+            end
+        end
+    end
+    return bestPet
+end
+
+-- Aba Principal
+local MainTab = Window:CreateTab("Principal", 4481733521)
+
+-- 1. ESP e Seleção de Personagens
+MainTab:CreateSection("ESP & Personagens")
+
+MainTab:CreateButton({
+   Name = "Listar Melhores Pets",
+   Callback = function()
+       local pets = {}
+       for _, v in pairs(game.Workspace:GetDescendants()) do
+           if v:FindFirstChild("Rarity") then
+               table.insert(pets, {Name = v.Name, Rarity = v.Rarity.Value, Value = v:FindFirstChild("Value") and v.Value.Value or 0})
+           end
+       end
+       
+       -- Ordena do melhor para o pior baseado na tabela de raridades
+       table.sort(pets, function(a, b)
+           return Rarities[a.Rarity] > Rarities[b.Rarity]
+       end)
+       
+       print("--- RANKING DE PETS ---")
+       for i, pet in ipairs(pets) do
+           print(string.format("%d. %s | Raridade: %s | Valor: %d", i, pet.Name, pet.Rarity, pet.Value))
+       end
+       Rayfield:Notify({Title = "ESP", Content = "Lista de pets enviada para o Console (F9)", Duration = 3})
+   end,
+})
+
+-- 2. Teleguiado
+MainTab:CreateSection("Teleguiado")
+
+local IslandDropdown = MainTab:CreateDropdown({
+   Name = "Selecionar Ilha",
+   Options = Islands,
+   CurrentOption = "Forest",
+   Callback = function(Option)
+       -- Lógica de teleporte para a ilha selecionada
+       local island = game.Workspace:FindFirstChild(Option)
+       if island then
+           game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = island.PrimaryPart.CFrame
+       end
+   end,
+})
+
+MainTab:CreateInput({
+   Name = "Nome do Pet para Teleportar",
+   Placeholder = "Ex: Dragão Divino",
+   Callback = function(Text)
+       SelectedPet = nil
+       for _, v in pairs(game.Workspace:GetDescendants()) do
+           if v.Name == Text then
+               SelectedPet = v
+               break
+           end
+       end
+       if SelectedPet then
+           Rayfield:Notify({Title = "Sucesso", Content = "Pet selecionado!", Duration = 2})
+       end
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "Teletransportar ao Pet",
+   Callback = function()
+       if SelectedPet then
+           game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = SelectedPet.HumanoidRootPart.CFrame
+       else
+           Rayfield:Notify({Title = "Erro", Content = "Selecione um pet válido primeiro!", Duration = 3})
+       end
+   end,
+})
+
+-- 3. Instant Steal & Zona Segura
+MainTab:CreateSection("Instant Steal")
+
+MainTab:CreateToggle({
+   Name = "Ativar Instant Steal",
+   CurrentState = false,
+   Callback = function(Value)
+       InstantStealActive = Value
+       if Value then
+           -- Cria a representação visual da Zona Segura (Retângulo)
+           local part = Instance.new("Part")
+           part.Name = "SafeZone"
+           part.Size = Vector3.new(10, 1, 10)
+           part.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, -3, 0)
+           part.Anchored = true
+           part.CanCollide = false
+           part.Transparency = 0.5
+           part.BrickColor = BrickColor.new("Bright blue")
+           part.Parent = game.Workspace
+           SafeZonePos = part.Position
+       else
+           if game.Workspace:FindFirstChild("SafeZone") then
+               game.Workspace.SafeZone:Destroy()
+           end
+       end
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "Executar Roubo Instantâneo",
+   Callback = function()
+       if not SelectedPet then return end
+       
+       local originalPos = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+       local targetPos = SelectedPet.HumanoidRootPart.CFrame
+       
+       -- Teleporte para o Pet
+       game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = targetPos
+       
+       -- Simula o roubo (Dispara o RemoteEvent do jogo)
+       -- Nota: O nome 'StealEgg' é genérico, deve ser substituído pelo nome real do evento do jogo
+       local remote = game:GetService("ReplicatedStorage"):FindFirstChild("StealEgg") or game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
+       if remote then
+           remote:FireServer(SelectedPet)
+       end
+       
+       wait(0.1)
+       
+       -- Retorno para a Zona Segura ou Posição Original
+       if InstantStealActive then
+           game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(SafeZonePos)
+       else
+           game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = originalPos
+       end
+   end,
+})
+
+-- 4. Loop de Roubo
+MainTab:CreateSection("Automação")
+
+MainTab:CreateToggle({
+   Name = "Loop de Melhores Pets",
+   CurrentState = false,
+   Callback = function(Value)
+       LoopActive = Value
+       if Value then
+           spawn(function()
+               while LoopActive do
+                   local target = GetBestPet()
+                   if target then
+                       SelectedPet = target
+                       -- Executa a lógica de roubo
+                       game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
+                       
+                       local remote = game:GetService("ReplicatedStorage"):FindFirstChild("StealEgg") or game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
+                       if remote then remote:FireServer(target) end
+                       
+                       wait(0.5)
+                       -- Volta para a zona segura se estiver ativa
+                       if InstantStealActive then
+                           game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(SafeZonePos)
+                       end
+                   end
+                   wait(1) -- Intervalo entre roubos para evitar kick
+               end
+           end)
+       end
+   end,
+})
+
