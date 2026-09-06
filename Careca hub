@@ -1,5 +1,3 @@
-local Rayfield = loadstring(game:HttpGet('https://github.com/shlexware/RayfieldLibrary/releases/download/latest/library.lua'))()
-
 local Window = Rayfield:CreateWindow({
    Name = "Careca Hub | Roube um Ovo",
    LoadingTitle = "Carregando Careca Hub...",
